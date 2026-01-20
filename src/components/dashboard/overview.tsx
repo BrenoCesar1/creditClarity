@@ -9,31 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { DollarSign, CreditCard, Users, TrendingUp } from 'lucide-react';
 import { Suspense } from 'react';
 import { Skeleton } from '../ui/skeleton';
-import { useUser } from '@/firebase/auth/use-user';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useData } from '@/context/data-context';
 import type { Card as CardType, Transaction, Debt } from '@/lib/types';
 
 export function DashboardOverview() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const { data: cardsData, loading: cardsLoading } = useCollection<CardType>(
-    user ? query(collection(firestore, 'cards'), where('userId', '==', user.uid)) : null
-  );
-  const { data: transactionsData, loading: transactionsLoading } = useCollection<Transaction>(
-    user ? query(collection(firestore, 'transactions'), where('userId', '==', user.uid)) : null
-  );
-  const { data: debtsData, loading: debtsLoading } = useCollection<Debt>(
-    user ? query(collection(firestore, 'debts'), where('userId', '==', user.uid)) : null
-  );
-
-  const cards = cardsData || [];
-  const transactions = transactionsData || [];
-  const debts = debtsData || [];
-  
-  const loading = cardsLoading || transactionsLoading || debtsLoading;
+  const { cards, transactions, debts } = useData();
 
   const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
   const totalDebt = debts
@@ -63,37 +43,6 @@ export function DashboardOverview() {
         icon: <CreditCard className="h-6 w-6 text-muted-foreground" />,
     }
   ];
-
-  if (loading) {
-    return (
-        <div className="grid gap-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-28 rounded-lg" />
-          <Skeleton className="h-28 rounded-lg" />
-          <Skeleton className="h-28 rounded-lg" />
-        </div>
-        <div className="grid lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <Skeleton className="h-56 rounded-lg" />
-          </div>
-          <div className="lg:col-span-2">
-            <Skeleton className="h-56 rounded-lg" />
-          </div>
-        </div>
-        <div className="grid lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3">
-                <Skeleton className="h-80 rounded-lg" />
-            </div>
-            <div className="lg:col-span-2">
-                <Skeleton className="h-80 rounded-lg" />
-            </div>
-        </div>
-        <div>
-          <Skeleton className="h-96 rounded-lg" />
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -141,7 +90,7 @@ export function DashboardOverview() {
       </div>
 
       <div>
-        <RecentTransactions initialTransactions={transactions} />
+        <RecentTransactions />
       </div>
     </div>
   );

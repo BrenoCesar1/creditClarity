@@ -10,11 +10,9 @@ import {
 } from '@/components/ui/sidebar';
 import { CreditCard, Home, Settings, Users, Wallet, ArrowLeftRight } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/firebase/auth/use-user';
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
 
   const menuItems = [
     {
@@ -43,10 +41,6 @@ export function AppSidebar() {
       icon: Settings,
     },
   ];
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">

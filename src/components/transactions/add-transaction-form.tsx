@@ -4,23 +4,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser } from '@/firebase/auth/use-user';
-import { useFirestore } from '@/firebase';
-import { addDoc, collection, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import type { Card, Transaction } from '@/lib/types';
+import type { Transaction } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { useData } from '@/context/data-context';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -31,14 +26,9 @@ const transactionSchema = z.object({
   installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddTransactionForm() {
-  const { user } = useUser();
-  const firestore = useFirestore();
+export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void }) {
   const { toast } = useToast();
-  
-  const { data: cards, loading: cardsLoading } = useCollection<Card>(
-    user ? query(collection(firestore, 'cards'), where('userId', '==', user.uid)) : null
-  );
+  const { cards } = useData();
 
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
@@ -49,17 +39,11 @@ export function AddTransactionForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof transactionSchema>) => {
-    if (!user || !firestore) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado.' });
-        return;
-    }
-    
     const transactionData: Omit<Transaction, 'id'> = {
         description: values.description,
         amount: values.amount,
         cardId: values.cardId,
         date: values.date.toISOString(),
-        userId: user.uid,
     };
 
     if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
@@ -69,20 +53,9 @@ export function AddTransactionForm() {
         }
     }
     
-    const transactionsCollection = collection(firestore, 'transactions');
-    addDoc(transactionsCollection, transactionData)
-        .then(() => {
-            toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-            form.reset();
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: transactionsCollection.path,
-                operation: 'create',
-                requestResourceData: transactionData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+    onAddTransaction(transactionData);
+    toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
+    form.reset();
   };
 
   return (
@@ -122,10 +95,10 @@ export function AddTransactionForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Cartão</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={cardsLoading}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={cards.length === 0}>
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder={cardsLoading ? "Carregando..." : "Selecione o cartão"} />
+                            <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>

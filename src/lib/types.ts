@@ -4,7 +4,6 @@ export interface Card {
   brand: 'visa' | 'mastercard' | 'amex' | 'elo';
   last4: string;
   expiry: string;
-  userId: string;
 }
 
 export interface Transaction {
@@ -18,7 +17,6 @@ export interface Transaction {
     current: number;
     total: number;
   };
-  userId: string;
 }
 
 export interface Debt {
@@ -29,12 +27,4 @@ export interface Debt {
   reason: string;
   paid: boolean;
   date: string;
-  userId: string;
-}
-
-export interface UserProfile {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
 }

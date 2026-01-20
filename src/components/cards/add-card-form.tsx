@@ -7,13 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser } from '@/firebase/auth/use-user';
-import { useFirestore } from '@/firebase';
-import { addDoc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import type { Card } from '@/lib/types';
 
 const cardSchema = z.object({
   name: z.string().min(2, { message: 'O nome do cartão deve ter pelo menos 2 caracteres.' }),
@@ -22,9 +18,7 @@ const cardSchema = z.object({
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
 });
 
-export function AddCardForm() {
-  const { user } = useUser();
-  const firestore = useFirestore();
+export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof cardSchema>>({
     resolver: zodResolver(cardSchema),
@@ -36,31 +30,9 @@ export function AddCardForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof cardSchema>) => {
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para adicionar um cartão.' });
-        return;
-    }
-    
-    const cardData = {
-        ...values,
-        userId: user.uid,
-    };
-    
-    const cardsCollection = collection(firestore, 'cards');
-
-    addDoc(cardsCollection, cardData)
-        .then(() => {
-            toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
-            form.reset();
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-              path: cardsCollection.path,
-              operation: 'create',
-              requestResourceData: cardData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+    onAddCard(values);
+    toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
+    form.reset();
   };
 
   return (

@@ -6,13 +6,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useUser } from '@/firebase/auth/use-user';
-import { useFirestore } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import type { Debt } from '@/lib/types';
 
 const debtSchema = z.object({
   person: z.string().min(2, { message: 'O nome da pessoa deve ter pelo menos 2 caracteres.' }),
@@ -20,9 +16,7 @@ const debtSchema = z.object({
   reason: z.string().min(2, { message: 'O motivo deve ter pelo menos 2 caracteres.' }),
 });
 
-export function AddDebtForm() {
-  const { user } = useUser();
-  const firestore = useFirestore();
+export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => void}) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof debtSchema>>({
     resolver: zodResolver(debtSchema),
@@ -33,34 +27,16 @@ export function AddDebtForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof debtSchema>) => {
-    if (!user) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para adicionar uma dívida.' });
-        return;
-    }
-    
     const debtData = {
         ...values,
-        userId: user.uid,
         paid: false,
         date: new Date().toISOString(),
         avatarUrl: `https://picsum.photos/seed/${values.person.replace(/\s/g, '')}/40/40`
     };
     
-    const debtsCollection = collection(firestore, 'debts');
-
-    addDoc(debtsCollection, debtData)
-        .then(() => {
-            toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
-            form.reset();
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: debtsCollection.path,
-                operation: 'create',
-                requestResourceData: debtData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+    onAddDebt(debtData);
+    toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
+    form.reset();
   };
 
   return (

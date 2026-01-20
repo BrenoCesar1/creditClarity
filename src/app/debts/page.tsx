@@ -2,20 +2,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddDebtForm } from "@/components/debts/add-debt-form";
 import { DebtsList } from "@/components/debts/debts-list";
-import { useUser } from "@/firebase/auth/use-user";
-import { useCollection } from "@/firebase/firestore/use-collection";
-import { useFirestore } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import type { Debt } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useData } from "@/context/data-context";
 import { Users } from "lucide-react";
 
 export default function DebtsPage() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { data: debts, loading } = useCollection<Debt>(
-        user ? query(collection(firestore, 'debts'), where('userId', '==', user.uid)) : null
-    );
+    const { debts, addDebt } = useData();
 
     return (
         <div className="grid gap-8">
@@ -25,7 +16,7 @@ export default function DebtsPage() {
                     <CardDescription>Registre um novo valor a receber de terceiros.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddDebtForm />
+                    <AddDebtForm onAddDebt={addDebt} />
                 </CardContent>
             </Card>
 
@@ -35,7 +26,7 @@ export default function DebtsPage() {
                     <CardDescription>Sua lista de dívidas a receber.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <Skeleton className="h-40" /> : <DebtsList debts={debts || []} />}
+                    <DebtsList debts={debts} />
                 </CardContent>
             </Card>
         </div>

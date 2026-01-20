@@ -17,11 +17,8 @@ import { BrainCircuit, Loader2 } from 'lucide-react';
 import { categorizePurchases } from '@/ai/flows/categorize-purchases';
 import { useToast } from '@/hooks/use-toast';
 import CategoryIcon from './category-icon';
-import { doc, updateDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { Skeleton } from '../ui/skeleton';
+import { useData } from '@/context/data-context';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -41,11 +38,10 @@ function formatDate(dateString: string) {
     });
 }
 
-export function RecentTransactions({ initialTransactions }: { initialTransactions: Transaction[] }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
+export function RecentTransactions() {
+  const { transactions, updateTransaction } = useData();
   const [isCategorizing, setIsCategorizing] = useState(false);
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -70,11 +66,8 @@ export function RecentTransactions({ initialTransactions }: { initialTransaction
     try {
       const result = await categorizePurchases({ purchases: uncategorized });
       
-      const updatedTransactions = [...transactions];
-      const categoryUpdatePromises: Promise<void>[] = [];
-
       result.categories.forEach(categorizedPurchase => {
-        const transactionToUpdate = updatedTransactions.find(
+        const transactionToUpdate = transactions.find(
           (t) => !t.category && t.description === categorizedPurchase.description && t.amount === categorizedPurchase.amount
         );
 
@@ -88,28 +81,10 @@ export function RecentTransactions({ initialTransactions }: { initialTransaction
           };
           const newCategory = categoryMap[categorizedPurchase.category.toLowerCase()] || 'Outros';
           
-          // Update local state
-          transactionToUpdate.category = newCategory;
-
-          // Prepare Firestore update
-          const transactionRef = doc(firestore, 'transactions', transactionToUpdate.id);
-          categoryUpdatePromises.push(
-            updateDoc(transactionRef, { category: newCategory })
-             .catch((serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: transactionRef.path,
-                    operation: 'update',
-                    requestResourceData: { category: newCategory },
-                });
-                errorEmitter.emit('permission-error', permissionError);
-              })
-          );
+          updateTransaction(transactionToUpdate.id, { category: newCategory });
         }
       });
       
-      await Promise.all(categoryUpdatePromises);
-
-      setTransactions(updatedTransactions);
       toast({
         title: 'Categorias aplicadas!',
         description: `${result.categories.length} transações foram categorizadas com sucesso.`,

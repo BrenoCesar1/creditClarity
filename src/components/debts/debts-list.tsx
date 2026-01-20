@@ -1,15 +1,10 @@
 'use client';
 import type { Debt } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useFirestore } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { useData } from '@/context/data-context';
 
 function formatCurrency(amount: number) {
     return new Intl.NumberFormat('pt-BR', {
@@ -18,31 +13,16 @@ function formatCurrency(amount: number) {
     }).format(amount);
 }
 
-export function DebtsList({ debts: initialDebts }: { debts: Debt[] }) {
-    const [debts, setDebts] = useState(initialDebts);
-    const firestore = useFirestore();
+export function DebtsList({ debts }: { debts: Debt[] }) {
+    const { updateDebt } = useData();
     const { toast } = useToast();
 
     const handlePaidChange = (debtId: string, paid: boolean) => {
-        const debtRef = doc(firestore, 'debts', debtId);
-        updateDoc(debtRef, { paid })
-          .then(() => {
-            setDebts((prevDebts) =>
-              prevDebts.map((debt) => (debt.id === debtId ? { ...debt, paid } : debt))
-            );
-            toast({
-                title: "Dívida atualizada!",
-            })
-          })
-          .catch((serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: debtRef.path,
-                operation: 'update',
-                requestResourceData: { paid },
-            });
-            errorEmitter.emit('permission-error', permissionError);
-          });
-      };
+        updateDebt(debtId, { paid });
+        toast({
+            title: "Dívida atualizada!",
+        });
+    };
 
     if (debts.length === 0) {
         return <p className="text-muted-foreground text-center">Nenhuma dívida a receber cadastrada.</p>
