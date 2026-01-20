@@ -21,7 +21,15 @@ const firebaseConfig = {
 
 export function getFirebaseConfig() {
     if (!firebaseConfig.apiKey) {
-        throw new Error('Missing Firebase config: Make sure to set the environment variables in .env.local');
+        console.warn("Firebase config not found, using dummy values. Please set up your .env file.");
+        return {
+            apiKey: "dummy-key",
+            authDomain: "dummy-project.firebaseapp.com",
+            projectId: "dummy-project",
+            storageBucket: "dummy-project.appspot.com",
+            messagingSenderId: "dummy-sender-id",
+            appId: "dummy-app-id",
+        };
     }
     return firebaseConfig;
 }
