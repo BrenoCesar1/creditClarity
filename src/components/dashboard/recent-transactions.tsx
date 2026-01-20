@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Transaction } from '@/lib/types';
 import {
   Table,
@@ -17,6 +17,11 @@ import { BrainCircuit, Loader2 } from 'lucide-react';
 import { categorizePurchases } from '@/ai/flows/categorize-purchases';
 import { useToast } from '@/hooks/use-toast';
 import CategoryIcon from './category-icon';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { Skeleton } from '../ui/skeleton';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -26,11 +31,13 @@ function formatCurrency(amount: number) {
 }
 
 function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+    const date = new Date(dateString);
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
-        timeZone: 'UTC'
+        timeZone: userTimeZone
     });
 }
 
@@ -38,6 +45,12 @@ export function RecentTransactions({ initialTransactions }: { initialTransaction
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isCategorizing, setIsCategorizing] = useState(false);
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleCategorize = async () => {
     setIsCategorizing(true);
@@ -57,24 +70,44 @@ export function RecentTransactions({ initialTransactions }: { initialTransaction
     try {
       const result = await categorizePurchases({ purchases: uncategorized });
       
-      const updatedTransactions = transactions.map((t) => {
-        if (!t.category) {
-          const categorized = result.categories.find(
-            (c) => c.description === t.description && c.amount === t.amount
+      const updatedTransactions = [...transactions];
+      const categoryUpdatePromises: Promise<void>[] = [];
+
+      result.categories.forEach(categorizedPurchase => {
+        const transactionToUpdate = updatedTransactions.find(
+          (t) => !t.category && t.description === categorizedPurchase.description && t.amount === categorizedPurchase.amount
+        );
+
+        if (transactionToUpdate) {
+          const categoryMap: { [key: string]: Transaction['category'] } = {
+              'food': 'Alimentação',
+              'transportation': 'Transporte',
+              'entertainment': 'Lazer',
+              'utilities': 'Contas',
+              'other': 'Outros'
+          };
+          const newCategory = categoryMap[categorizedPurchase.category.toLowerCase()] || 'Outros';
+          
+          // Update local state
+          transactionToUpdate.category = newCategory;
+
+          // Prepare Firestore update
+          const transactionRef = doc(firestore, 'transactions', transactionToUpdate.id);
+          categoryUpdatePromises.push(
+            updateDoc(transactionRef, { category: newCategory })
+             .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: transactionRef.path,
+                    operation: 'update',
+                    requestResourceData: { category: newCategory },
+                });
+                errorEmitter.emit('permission-error', permissionError);
+              })
           );
-          if (categorized) {
-            const categoryMap: { [key: string]: Transaction['category'] } = {
-                'food': 'Alimentação',
-                'transportation': 'Transporte',
-                'entertainment': 'Lazer',
-                'utilities': 'Contas',
-                'other': 'Outros'
-            };
-            return { ...t, category: categoryMap[categorized.category.toLowerCase()] || 'Outros' };
-          }
         }
-        return t;
       });
+      
+      await Promise.all(categoryUpdatePromises);
 
       setTransactions(updatedTransactions);
       toast({
@@ -140,7 +173,7 @@ export function RecentTransactions({ initialTransactions }: { initialTransaction
                     <span className="text-xs text-muted-foreground">Não categorizado</span>
                   )}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{formatDate(transaction.date)}</TableCell>
+                <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}</TableCell>
                 <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
               </TableRow>
             ))}

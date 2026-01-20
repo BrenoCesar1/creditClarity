@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The user's photo URL."
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Card": {
+      "title": "Card",
+      "description": "Represents a user's credit card.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "brand": {
+          "type": "string",
+          "enum": ["visa", "mastercard", "amex", "elo"]
+        },
+        "last4": {
+          "type": "string"
+        },
+        "expiry": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "brand", "last4", "expiry", "userId"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Represents a single transaction.",
+      "type": "object",
+      "properties": {
+        "cardId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Alimentação", "Transporte", "Lazer", "Contas", "Outros"]
+        },
+        "installments": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "type": "number"
+            },
+            "total": {
+              "type": "number"
+            }
+          }
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": ["cardId", "description", "amount", "date", "userId"]
+    },
+    "Debt": {
+      "title": "Debt",
+      "description": "Represents a debt to be received.",
+      "type": "object",
+      "properties": {
+        "person": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "string"
+        }
+      },
+      "required": ["person", "amount", "reason", "paid", "date", "userId"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores user profile information."
+    },
+    "/cards": {
+      "schema": {
+        "$ref": "#/entities/Card"
+      },
+      "description": "Stores user's credit cards."
+    },
+    "/transactions": {
+      "schema": {
+        "$ref": "#/entities/Transaction"
+      },
+      "description": "Stores user's transactions."
+    },
+    "/debts": {
+      "schema": {
+        "$ref": "#/entities/Debt"
+      },
+      "description": "Stores user's debts."
+    }
+  }
+}

@@ -4,7 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
-import { SidebarInset } from '@/components/ui/sidebar';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
   title: 'Credit Clarity',
@@ -27,18 +28,21 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar />
-            <div className="flex flex-col w-full">
-              <AppHeader />
-              <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-                {children}
-              </main>
+        <FirebaseClientProvider>
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col w-full">
+                <AppHeader />
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
-        <Toaster />
+          </SidebarProvider>
+          <Toaster />
+          <FirebaseErrorListener />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

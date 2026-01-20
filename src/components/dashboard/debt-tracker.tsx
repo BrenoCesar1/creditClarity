@@ -7,6 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -17,11 +22,28 @@ function formatCurrency(amount: number) {
 
 export function DebtTracker({ debts: initialDebts }: { debts: Debt[] }) {
   const [debts, setDebts] = useState(initialDebts);
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
   const handlePaidChange = (debtId: string, paid: boolean) => {
-    setDebts((prevDebts) =>
-      prevDebts.map((debt) => (debt.id === debtId ? { ...debt, paid } : debt))
-    );
+    const debtRef = doc(firestore, 'debts', debtId);
+    updateDoc(debtRef, { paid })
+      .then(() => {
+        setDebts((prevDebts) =>
+          prevDebts.map((debt) => (debt.id === debtId ? { ...debt, paid } : debt))
+        );
+        toast({
+            title: "Dívida atualizada!",
+        })
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: debtRef.path,
+            operation: 'update',
+            requestResourceData: { paid },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
   
   const sortedDebts = [...debts].sort((a, b) => {

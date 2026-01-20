@@ -1,0 +1,140 @@
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/firebase/auth/use-user';
+import { useFirestore } from '@/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
+const cardSchema = z.object({
+  name: z.string().min(2, { message: 'O nome do cartão deve ter pelo menos 2 caracteres.' }),
+  brand: z.enum(['visa', 'mastercard', 'amex', 'elo'], { required_error: 'Selecione uma bandeira.' }),
+  last4: z.string().length(4, { message: 'Os últimos 4 dígitos são obrigatórios.' }).regex(/^\d{4}$/, { message: 'Apenas números são permitidos.'}),
+  expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
+});
+
+export function AddCardForm() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof cardSchema>>({
+    resolver: zodResolver(cardSchema),
+    defaultValues: {
+      name: '',
+      last4: '',
+      expiry: '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof cardSchema>) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para adicionar um cartão.' });
+        return;
+    }
+    
+    const cardData = {
+        ...values,
+        userId: user.uid,
+    };
+    
+    const cardsCollection = collection(firestore, 'cards');
+
+    addDoc(cardsCollection, cardData)
+        .then(() => {
+            toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
+            form.reset();
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+              path: cardsCollection.path,
+              operation: 'create',
+              requestResourceData: cardData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Cartão</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: Cartão Principal" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+            control={form.control}
+            name="brand"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Bandeira</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="visa">Visa</SelectItem>
+                        <SelectItem value="mastercard">Mastercard</SelectItem>
+                        <SelectItem value="amex">American Express</SelectItem>
+                        <SelectItem value="elo">Elo</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="last4"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Últimos 4 dígitos</FormLabel>
+                <FormControl>
+                    <Input placeholder="1234" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="expiry"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Validade (MM/AA)</FormLabel>
+                <FormControl>
+                    <Input placeholder="12/26" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Adicionar Cartão
+        </Button>
+      </form>
+    </Form>
+  );
+}
