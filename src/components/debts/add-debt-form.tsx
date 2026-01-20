@@ -33,7 +33,10 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
     resolver: zodResolver(debtSchema),
     defaultValues: {
       person: '',
+      amount: undefined,
       reason: '',
+      installmentsCurrent: undefined,
+      installmentsTotal: undefined,
     },
   });
 
@@ -103,7 +106,7 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
                     <FormItem className="md:col-span-1">
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="150.00" {...field} />
+                        <Input type="number" placeholder="150.00" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

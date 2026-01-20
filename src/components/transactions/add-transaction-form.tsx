@@ -43,7 +43,11 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       description: '',
+      amount: undefined,
+      cardId: undefined,
       date: new Date(),
+      installmentsCurrent: undefined,
+      installmentsTotal: undefined,
     },
   });
 
@@ -127,7 +131,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
                     <FormItem>
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.01" placeholder="150.00" {...field} />
+                        <Input type="number" step="0.01" placeholder="150.00" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
