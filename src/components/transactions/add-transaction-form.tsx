@@ -26,7 +26,7 @@ const transactionSchema = z.object({
   installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void }) {
+export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void> }) {
   const { toast } = useToast();
   const { cards } = useData();
 
@@ -53,7 +53,7 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
         }
     }
     
-    onAddTransaction(transactionData);
+    await onAddTransaction(transactionData);
     toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
     form.reset();
   };

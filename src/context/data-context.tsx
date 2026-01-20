@@ -1,54 +1,134 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Card, Transaction, Debt } from '@/lib/types';
-
-// Mock initial data as if loaded from a spreadsheet
-const initialCards: Card[] = [];
-const initialTransactions: Transaction[] = [];
-const initialDebts: Debt[] = [];
+import { Loader2 } from 'lucide-react';
 
 interface DataContextType {
   cards: Card[];
   transactions: Transaction[];
   debts: Debt[];
-  addCard: (card: Omit<Card, 'id'>) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-  addDebt: (debt: Omit<Debt, 'id'>) => void;
-  updateDebt: (debtId: string, updates: Partial<Debt>) => void;
-  updateTransaction: (transactionId: string, updates: Partial<Transaction>) => void;
+  addCard: (card: Omit<Card, 'id'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addDebt: (debt: Omit<Debt, 'id'>) => Promise<void>;
+  updateDebt: (debtId: string, updates: Partial<Debt>) => Promise<void>;
+  updateTransaction: (transactionId: string, updates: Partial<Transaction>) => Promise<void>;
+  loading: boolean;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [cards, setCards] = useState<Card[]>(initialCards);
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [debts, setDebts] = useState<Debt[]>(initialDebts);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addCard = (card: Omit<Card, 'id'>) => {
-    setCards(prev => [...prev, { ...card, id: Date.now().toString() }]);
+  useEffect(() => {
+    async function loadData() {
+        setLoading(true);
+        setError(null);
+        try {
+            const [cardsRes, transactionsRes, debtsRes] = await Promise.all([
+                fetch('/api/data/cards'),
+                fetch('/api/data/transactions'),
+                fetch('/api/data/debts'),
+            ]);
+
+            if (!cardsRes.ok || !transactionsRes.ok || !debtsRes.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            const cardsData = await cardsRes.json();
+            const transactionsData = await transactionsRes.json();
+            const debtsData = await debtsRes.json();
+
+            setCards(Array.isArray(cardsData) ? cardsData : []);
+            setTransactions(Array.isArray(transactionsData) ? transactionsData.sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []);
+            setDebts(Array.isArray(debtsData) ? debtsData : []);
+        } catch (err) {
+            console.error("Failed to load data from API", err);
+            setError('Falha ao carregar os dados da planilha. Verifique se as credenciais no arquivo .env.local estão corretas e se a planilha foi compartilhada com o email da conta de serviço.');
+        } finally {
+            setLoading(false);
+        }
+    }
+    loadData();
+  }, []);
+
+  const addCard = async (card: Omit<Card, 'id'>) => {
+    const response = await fetch('/api/data/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(card),
+    });
+    const newCard = await response.json();
+    setCards(prev => [...prev, newCard]);
   };
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    setTransactions(prev => [...prev, { ...transaction, id: Date.now().toString() }].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    const response = await fetch('/api/data/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+    });
+    const newTransaction = await response.json();
+    setTransactions(prev => [...prev, newTransaction].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
-  const addDebt = (debt: Omit<Debt, 'id'>) => {
-    setDebts(prev => [...prev, { ...debt, id: Date.now().toString() }]);
+  const addDebt = async (debt: Omit<Debt, 'id'>) => {
+    const response = await fetch('/api/data/debts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(debt),
+    });
+    const newDebt = await response.json();
+    setDebts(prev => [...prev, newDebt]);
   };
   
-  const updateDebt = (debtId: string, updates: Partial<Debt>) => {
+  const updateDebt = async (debtId: string, updates: Partial<Debt>) => {
     setDebts(prev => prev.map(d => d.id === debtId ? { ...d, ...updates } : d));
+    await fetch('/api/data/debts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: debtId, updates }),
+    });
   };
 
-  const updateTransaction = (transactionId: string, updates: Partial<Transaction>) => {
+  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>) => {
       setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, ...updates } : t));
+      await fetch('/api/data/transactions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: transactionId, updates }),
+      });
   };
 
+  if (loading) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Carregando dados da sua planilha...</p>
+            </div>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background p-4">
+            <div className="flex max-w-md flex-col items-center gap-4 rounded-lg border border-destructive bg-card p-8 text-center">
+                <h2 className="text-xl font-semibold text-destructive">Erro de Conexão</h2>
+                <p className="text-muted-foreground">{error}</p>
+            </div>
+        </div>
+    );
+  }
 
   return (
-    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, updateTransaction }}>
+    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, updateTransaction, loading }}>
       {children}
     </DataContext.Provider>
   );

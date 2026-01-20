@@ -18,7 +18,7 @@ const debtSchema = z.object({
   installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>) => void}) {
+export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>) => Promise<void>}) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof debtSchema>>({
     resolver: zodResolver(debtSchema),
@@ -45,7 +45,7 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
         }
     }
     
-    onAddDebt(debtData);
+    await onAddDebt(debtData);
     toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
     form.reset();
   };

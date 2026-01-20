@@ -18,7 +18,7 @@ const cardSchema = z.object({
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
 });
 
-export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>) => void }) {
+export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>) => Promise<void> }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof cardSchema>>({
     resolver: zodResolver(cardSchema),
@@ -30,7 +30,7 @@ export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>)
   });
 
   const onSubmit = async (values: z.infer<typeof cardSchema>) => {
-    onAddCard(values);
+    await onAddCard(values);
     toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
     form.reset();
   };
