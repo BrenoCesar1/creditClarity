@@ -19,9 +19,9 @@ export async function GET(
         else return NextResponse.json({ error: 'Sheet not found' }, { status: 404 });
         
         return NextResponse.json(data);
-    } catch (error) {
-        console.error(error)
-        return NextResponse.json({ error: 'Failed to fetch data from sheet' }, { status: 500 });
+    } catch (error: any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message || 'Falha ao buscar dados da planilha.' }, { status: 500 });
     }
 }
 
@@ -39,9 +39,9 @@ export async function POST(
         else return NextResponse.json({ error: 'Sheet not found' }, { status: 404 });
 
         return NextResponse.json(newData, { status: 201 });
-    } catch (error) {
-        console.error(error)
-        return NextResponse.json({ error: 'Failed to add data to sheet' }, { status: 500 });
+    } catch (error: any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message || 'Falha ao adicionar dados na planilha.' }, { status: 500 });
     }
 }
 
@@ -57,8 +57,8 @@ export async function PUT(
         else return NextResponse.json({ error: 'Sheet not found or not updatable' }, { status: 404 });
         
         return NextResponse.json({ success: true }, { status: 200 });
-    } catch (error) {
-        console.error(error)
-        return NextResponse.json({ error: 'Failed to update data in sheet' }, { status: 500 });
+    } catch (error: any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message || 'Falha ao atualizar dados na planilha.' }, { status: 500 });
     }
 }

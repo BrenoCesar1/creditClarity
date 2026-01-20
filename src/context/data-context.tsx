@@ -30,26 +30,27 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         setError(null);
         try {
-            const [cardsRes, transactionsRes, debtsRes] = await Promise.all([
+            const responses = await Promise.all([
                 fetch('/api/data/cards'),
                 fetch('/api/data/transactions'),
                 fetch('/api/data/debts'),
             ]);
 
-            if (!cardsRes.ok || !transactionsRes.ok || !debtsRes.ok) {
-                throw new Error('Failed to fetch data');
+            for (const res of responses) {
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Falha ao buscar dados da planilha.');
+                }
             }
 
-            const cardsData = await cardsRes.json();
-            const transactionsData = await transactionsRes.json();
-            const debtsData = await debtsRes.json();
+            const [cardsData, transactionsData, debtsData] = await Promise.all(responses.map(res => res.json()));
 
             setCards(Array.isArray(cardsData) ? cardsData : []);
             setTransactions(Array.isArray(transactionsData) ? transactionsData.sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []);
             setDebts(Array.isArray(debtsData) ? debtsData : []);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to load data from API", err);
-            setError('Falha ao carregar os dados da planilha. Verifique se as credenciais no arquivo .env.local estão corretas e se a planilha foi compartilhada com o email da conta de serviço.');
+            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -119,9 +120,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   if (error) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background p-4">
-            <div className="flex max-w-md flex-col items-center gap-4 rounded-lg border border-destructive bg-card p-8 text-center">
-                <h2 className="text-xl font-semibold text-destructive">Erro de Conexão</h2>
-                <p className="text-muted-foreground">{error}</p>
+            <div className="flex max-w-lg flex-col items-center gap-4 rounded-lg border border-destructive bg-card p-8 text-center">
+                <h2 className="text-xl font-semibold text-destructive">Erro de Conexão com a Planilha</h2>
+                <p className="text-muted-foreground whitespace-pre-wrap">{error}</p>
             </div>
         </div>
     );

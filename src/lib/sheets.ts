@@ -4,6 +4,10 @@ import type { Card, Transaction, Debt } from './types';
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 const getAuth = () => {
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+        throw new Error('As credenciais da conta de serviço Google (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY) não foram encontradas no seu arquivo .env. Certifique-se de que o arquivo existe e as variáveis estão preenchidas.');
+    }
+
     const credentials = {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -24,6 +28,9 @@ const getSheets = () => {
 // --- Generic Functions ---
 
 async function getSheetData(sheetName: string): Promise<any[][]> {
+    if (!SHEET_ID) {
+        throw new Error('A variável GOOGLE_SHEET_ID não foi encontrada no seu arquivo .env.');
+    }
     const sheets = getSheets();
     try {
         const response = await sheets.spreadsheets.values.get({
@@ -31,13 +38,18 @@ async function getSheetData(sheetName: string): Promise<any[][]> {
             range: sheetName,
         });
         return response.data.values || [];
-    } catch (error) {
+    } catch (error: any) {
         console.error(`Error fetching data from ${sheetName}:`, error);
-        // If the sheet is empty, it might throw an error. Return empty array with headers.
-        if ((error as any).code === 400) {
-            return [];
+        if (error.code === 403) { // Permission denied
+             throw new Error(`Permissão negada para acessar a planilha. Verifique se você compartilhou a planilha com o e-mail da conta de serviço e deu permissão de "Editor". E-mail: ${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}`);
         }
-        throw error;
+        if (error.code === 400 && error.message.includes('Unable to parse range')) {
+            throw new Error(`A aba "${sheetName}" não foi encontrada ou está mal formatada na sua planilha. Verifique o nome da aba e se ela tem algum conteúdo.`);
+        }
+        if (error.code === 404) { // Not found
+             throw new Error(`Planilha não encontrada. Verifique se o GOOGLE_SHEET_ID no seu arquivo .env está correto.`);
+        }
+        throw new Error(`Ocorreu um erro ao buscar dados da planilha: ${error.message}`);
     }
 }
 
@@ -56,7 +68,7 @@ async function appendSheetData(sheetName: string, values: any[]) {
 async function updateSheetCell(sheetName: string, rowIndex: number, colIndex: number, value: any) {
     const sheets = getSheets();
     const colLetter = String.fromCharCode('A'.charCodeAt(0) + colIndex);
-    const range = `${sheetName}!${colLetter}${rowIndex + 1}`;
+    const range = `${sheetName}!${colLetter}${rowIndex}`;
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
       range: range,
@@ -72,8 +84,13 @@ async function updateSheetCell(sheetName: string, rowIndex: number, colIndex: nu
 // Cards
 export async function getCards(): Promise<Card[]> {
     const data = await getSheetData('cards');
-    if (data.length < 2) return [];
+    if (data.length < 1) return []; // Allow empty sheet
     const headers = data[0] || [];
+    const requiredHeaders = ['id', 'name', 'brand', 'last4', 'expiry'];
+    if(!requiredHeaders.every(h => headers.includes(h))) {
+        throw new Error(`A aba "cards" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
+    }
+    if (data.length < 2) return [];
     return data.slice(1).map(row => ({
         id: row[headers.indexOf('id')],
         name: row[headers.indexOf('name')],
@@ -94,8 +111,13 @@ export async function addCardToSheet(card: Omit<Card, 'id'>) {
 // Transactions
 export async function getTransactions(): Promise<Transaction[]> {
     const data = await getSheetData('transactions');
-    if (data.length < 2) return [];
+    if (data.length < 1) return [];
     const headers = data[0] || [];
+    const requiredHeaders = ['id', 'cardId', 'description', 'amount', 'date', 'category', 'installments_current', 'installments_total'];
+     if(!requiredHeaders.every(h => headers.includes(h))) {
+        throw new Error(`A aba "transactions" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
+    }
+    if (data.length < 2) return [];
     return data.slice(1).map(row => ({
         id: row[headers.indexOf('id')],
         cardId: row[headers.indexOf('cardId')],
@@ -138,7 +160,7 @@ export async function updateTransactionInSheet(transactionId: string, updates: P
     const rowIndex = data.findIndex(row => row[idIndex] === transactionId);
 
     if (rowIndex !== -1 && updates.category) {
-        await updateSheetCell('transactions', rowIndex, categoryIndex, updates.category);
+        await updateSheetCell('transactions', rowIndex + 2, categoryIndex, updates.category);
     }
 }
 
@@ -146,8 +168,13 @@ export async function updateTransactionInSheet(transactionId: string, updates: P
 // Debts
 export async function getDebts(): Promise<Debt[]> {
     const data = await getSheetData('debts');
-    if (data.length < 2) return [];
+    if (data.length < 1) return [];
     const headers = data[0] || [];
+    const requiredHeaders = ['id', 'person', 'avatarUrl', 'amount', 'reason', 'paid', 'date', 'installments_current', 'installments_total'];
+    if(!requiredHeaders.every(h => headers.includes(h))) {
+        throw new Error(`A aba "debts" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
+    }
+    if (data.length < 2) return [];
     return data.slice(1).map(row => ({
         id: row[headers.indexOf('id')],
         person: row[headers.indexOf('person')],
@@ -191,6 +218,6 @@ export async function updateDebtInSheet(debtId: string, updates: Partial<Debt>) 
     const rowIndex = data.findIndex(row => row[idIndex] === debtId);
 
     if (rowIndex !== -1 && updates.paid !== undefined) {
-         await updateSheetCell('debts', rowIndex, paidIndex, updates.paid.toString());
+         await updateSheetCell('debts', rowIndex + 2, paidIndex, updates.paid.toString());
     }
 }
