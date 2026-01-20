@@ -12,8 +12,8 @@ export function SpendingChart({ transactions }: { transactions: Transaction[] })
 
     transactions.forEach((transaction) => {
       const date = new Date(transaction.date);
-      const month = date.toLocaleString('pt-BR', { month: 'short' });
-      const year = date.getFullYear();
+      const month = date.toLocaleString('pt-BR', { month: 'short', timeZone: 'UTC' });
+      const year = date.getUTCFullYear();
       const key = `${month}/${year}`;
       
       monthlyTotals[key] = (monthlyTotals[key] || 0) + transaction.amount;
