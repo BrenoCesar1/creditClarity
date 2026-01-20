@@ -27,4 +27,8 @@ export interface Debt {
   reason: string;
   paid: boolean;
   date: string;
+  installments?: {
+    current: number;
+    total: number;
+  };
 }

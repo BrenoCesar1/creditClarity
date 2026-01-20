@@ -56,6 +56,11 @@ export function DebtsList({ debts }: { debts: Debt[] }) {
                   {debt.person}
                 </label>
                 <p className={cn("text-sm text-muted-foreground", debt.paid && "line-through")}>{debt.reason}</p>
+                {debt.installments && (
+                    <p className={cn("text-xs text-muted-foreground", debt.paid && "line-through")}>
+                        Parcela {debt.installments.current}/{debt.installments.total}
+                    </p>
+                )}
               </div>
               <div className={cn("font-medium text-right", debt.paid && "line-through text-muted-foreground")}>
                 {formatCurrency(debt.amount)}

@@ -14,9 +14,11 @@ const debtSchema = z.object({
   person: z.string().min(2, { message: 'O nome da pessoa deve ter pelo menos 2 caracteres.' }),
   amount: z.coerce.number().positive({ message: 'O valor deve ser positivo.' }),
   reason: z.string().min(2, { message: 'O motivo deve ter pelo menos 2 caracteres.' }),
+  installmentsCurrent: z.coerce.number().optional(),
+  installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => void}) {
+export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>) => void}) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof debtSchema>>({
     resolver: zodResolver(debtSchema),
@@ -27,12 +29,21 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id' |
   });
 
   const onSubmit = async (values: z.infer<typeof debtSchema>) => {
-    const debtData = {
-        ...values,
+    const debtData: Omit<Debt, 'id'> = {
+        person: values.person,
+        amount: values.amount,
+        reason: values.reason,
         paid: false,
         date: new Date().toISOString(),
-        avatarUrl: `https://picsum.photos/seed/${values.person.replace(/\s/g, '')}/40/40`
+        avatarUrl: `https://picsum.photos/seed/${values.person.replace(/\s/g, '')}/40/40`,
     };
+
+    if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
+        debtData.installments = {
+            current: values.installmentsCurrent,
+            total: values.installmentsTotal
+        }
+    }
     
     onAddDebt(debtData);
     toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
@@ -77,6 +88,34 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id' |
                     <FormLabel>Motivo</FormLabel>
                     <FormControl>
                         <Input placeholder="Ex: Empréstimo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="installmentsCurrent"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Parcela Atual (opcional)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="installmentsTotal"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Total de Parcelas (opcional)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="12" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
