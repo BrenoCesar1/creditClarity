@@ -41,7 +41,7 @@ async function getSheetData(sheetName: string): Promise<any[][]> {
     } catch (error: any) {
         console.error(`Error fetching data from ${sheetName}:`, error);
         if (error.code === 403) { // Permission denied
-             throw new Error(`Permissão negada para acessar a planilha. Verifique se você compartilhou a planilha com o e-mail da conta de serviço e deu permissão de "Editor". E-mail: ${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}`);
+             throw new Error(`Permissão negada para acessar a planilha. Verifique dois pontos: 1) Você compartilhou a planilha com o e-mail da conta de serviço ('${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}') e deu permissão de "Editor". 2) A API do Google Sheets está ativada no seu projeto Google Cloud.`);
         }
         if (error.code === 400 && error.message.includes('Unable to parse range')) {
             throw new Error(`A aba "${sheetName}" não foi encontrada ou está mal formatada na sua planilha. Verifique o nome da aba e se ela tem algum conteúdo.`);
@@ -160,7 +160,7 @@ export async function updateTransactionInSheet(transactionId: string, updates: P
     const rowIndex = data.findIndex(row => row[idIndex] === transactionId);
 
     if (rowIndex !== -1 && updates.category) {
-        await updateSheetCell('transactions', rowIndex + 2, categoryIndex, updates.category);
+        await updateSheetCell('transactions', rowIndex + 1, categoryIndex, updates.category);
     }
 }
 
@@ -218,6 +218,6 @@ export async function updateDebtInSheet(debtId: string, updates: Partial<Debt>) 
     const rowIndex = data.findIndex(row => row[idIndex] === debtId);
 
     if (rowIndex !== -1 && updates.paid !== undefined) {
-         await updateSheetCell('debts', rowIndex + 2, paidIndex, updates.paid.toString());
+         await updateSheetCell('debts', rowIndex + 1, paidIndex, updates.paid.toString());
     }
 }
