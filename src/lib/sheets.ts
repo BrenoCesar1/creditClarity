@@ -4,19 +4,29 @@ import type { Card, Transaction, Debt } from './types';
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 const getAuth = () => {
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
-        throw new Error('As credenciais da conta de serviço Google (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY) não foram encontradas no seu arquivo .env. Certifique-se de que o arquivo existe e as variáveis estão preenchidas.');
-    }
+    const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
 
-    const credentials = {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    };
-    const auth = new google.auth.GoogleAuth({
-        credentials,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-    return auth;
+    if (!serviceEmail || !privateKey) {
+        throw new Error('As credenciais da conta de serviço Google (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY) não foram encontradas nas variáveis de ambiente. Verifique sua configuração na Vercel.');
+    }
+    
+    try {
+        const credentials = {
+            client_email: serviceEmail,
+            private_key: privateKey.replace(/\\n/g, '\n'),
+        };
+        const auth = new google.auth.GoogleAuth({
+            credentials,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+        return auth;
+    } catch(error: any) {
+        if (error.message && error.message.includes('DECODER')) {
+            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
+        }
+        throw error;
+    }
 };
 
 const getSheets = () => {
