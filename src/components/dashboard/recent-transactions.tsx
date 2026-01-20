@@ -159,6 +159,7 @@ export function RecentTransactions() {
                   {transaction.installments && (
                     <div className="text-xs text-muted-foreground">
                       Parcela {transaction.installments.current}/{transaction.installments.total}
+                      {' '}({transaction.installments.total - transaction.installments.current} restantes)
                     </div>
                   )}
                 </TableCell>

@@ -35,7 +35,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
     return (
         <div className="grid md:grid-cols-2 gap-4">
             {cards.map((card) => (
-                <UICard key={card.id} className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-48 shadow-lg relative">
+                <UICard key={card.id} className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-52 shadow-lg relative">
                     <div className="absolute top-2 right-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -80,6 +80,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
                         •••• {card.last4}
                         </p>
                         <p className="text-sm opacity-80">Validade {card.expiry}</p>
+                        <p className="text-sm opacity-80">Vencimento dia {card.dueDate}</p>
                     </div>
                 </UICard>
             ))}

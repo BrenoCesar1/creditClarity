@@ -22,6 +22,54 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+const calculateInstallments = (transactions: Transaction[], cards: Card[]): Transaction[] => {
+    const today = new Date();
+    // Set time to 0 to compare dates only
+    today.setHours(0, 0, 0, 0);
+
+    return transactions.map(tx => {
+        // Skip if it's not an active installment transaction
+        if (!tx.installments || tx.installments.current >= tx.installments.total) {
+            return tx;
+        }
+
+        const card = cards.find(c => c.id === tx.cardId);
+        // Skip if card doesn't have a due date
+        if (!card || !card.dueDate) {
+            return tx;
+        }
+
+        const purchaseDate = new Date(tx.date);
+        purchaseDate.setHours(0,0,0,0);
+
+        let paidCount = 0;
+        // Start counting from the month after the purchase
+        let cursor = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, card.dueDate);
+        cursor.setHours(0,0,0,0);
+
+        // Count how many due dates have passed
+        while (cursor <= today && paidCount < tx.installments.total) {
+            paidCount++;
+            // Move to the next month's due date
+            cursor.setMonth(cursor.getMonth() + 1);
+        }
+
+        // Only update if the calculated current installment is greater than what's in the sheet
+        if (paidCount > (tx.installments.current || 0)) {
+            return {
+                ...tx,
+                installments: {
+                    ...tx.installments,
+                    current: paidCount
+                }
+            };
+        }
+
+        return tx;
+    });
+};
+
+
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [cards, setCards] = useState<Card[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -48,9 +96,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const [cardsData, transactionsData, debtsData] = await Promise.all(responses.map(res => res.json()));
+            
+            const loadedCards = Array.isArray(cardsData) ? cardsData : [];
+            const loadedTransactions = Array.isArray(transactionsData) ? transactionsData : [];
+            
+            const transactionsWithCalculatedInstallments = calculateInstallments(loadedTransactions, loadedCards);
 
-            setCards(Array.isArray(cardsData) ? cardsData : []);
-            setTransactions(Array.isArray(transactionsData) ? transactionsData.sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []);
+            setCards(loadedCards);
+            setTransactions(transactionsWithCalculatedInstallments.sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()));
             setDebts(Array.isArray(debtsData) ? debtsData : []);
         } catch (err: any) {
             console.error("Failed to load data from API", err);
@@ -73,7 +126,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateCard = async (cardId: string, updates: Partial<Omit<Card, 'id'>>) => {
-    setCards(prev => prev.map(c => c.id === cardId ? { ...c, ...updates } : c));
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, ...updates } as Card : c));
     await fetch('/api/data/cards', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

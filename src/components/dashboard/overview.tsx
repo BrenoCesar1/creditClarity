@@ -19,8 +19,9 @@ export function DashboardOverview() {
   const totalDebt = debts
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
-  const totalInstallments = transactions
-    .filter((t) => t.installments)
+  
+  const totalInstallmentsValue = transactions
+    .filter((t) => t.installments && t.installments.current < t.installments.total)
     .reduce((sum, t) => {
         const installmentValue = t.amount / t.installments!.total;
         return sum + installmentValue;
@@ -39,7 +40,7 @@ export function DashboardOverview() {
     },
     {
         title: 'Próxima Fatura (Estimativa)',
-        value: `R$ ${totalInstallments.toFixed(2)}`,
+        value: `R$ ${totalInstallmentsValue.toFixed(2)}`,
         icon: <CreditCard className="h-6 w-6 text-muted-foreground" />,
     }
   ];

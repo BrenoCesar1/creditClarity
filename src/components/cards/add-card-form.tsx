@@ -16,6 +16,7 @@ const cardSchema = z.object({
   brand: z.enum(['visa', 'mastercard', 'amex', 'elo'], { required_error: 'Selecione uma bandeira.' }),
   last4: z.string().length(4, { message: 'Os últimos 4 dígitos são obrigatórios.' }).regex(/^\d{4}$/, { message: 'Apenas números são permitidos.'}),
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
+  dueDate: z.coerce.number().min(1, { message: 'O dia deve ser entre 1 e 31.' }).max(31, { message: 'O dia deve ser entre 1 e 31.' }),
 });
 
 type CardFormValues = z.infer<typeof cardSchema>;
@@ -35,6 +36,7 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
       brand: undefined,
       last4: '',
       expiry: '',
+      dueDate: undefined,
     },
   });
 
@@ -45,6 +47,7 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             brand: cardToEdit.brand,
             last4: cardToEdit.last4,
             expiry: cardToEdit.expiry,
+            dueDate: cardToEdit.dueDate,
         });
     } else {
         form.reset({
@@ -52,6 +55,7 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             brand: undefined,
             last4: '',
             expiry: '',
+            dueDate: undefined,
         });
     }
   }, [cardToEdit, isEditMode, form]);
@@ -79,7 +83,7 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
             control={form.control}
             name="brand"
@@ -124,6 +128,19 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
                 <FormLabel>Validade (MM/AA)</FormLabel>
                 <FormControl>
                     <Input placeholder="12/26" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="dueDate"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Dia do Vencimento</FormLabel>
+                <FormControl>
+                    <Input type="number" placeholder="Ex: 10" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>

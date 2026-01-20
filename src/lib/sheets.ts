@@ -149,7 +149,7 @@ export async function getCards(): Promise<Card[]> {
     const data = await getSheetData('cards');
     if (data.length < 1) return []; // Allow empty sheet
     const headers = data[0] || [];
-    const requiredHeaders = ['id', 'name', 'brand', 'last4', 'expiry'];
+    const requiredHeaders = ['id', 'name', 'brand', 'last4', 'expiry', 'dueDate'];
     if(!requiredHeaders.every(h => headers.includes(h))) {
         throw new Error(`A aba "cards" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
     }
@@ -160,13 +160,14 @@ export async function getCards(): Promise<Card[]> {
         brand: row[headers.indexOf('brand')] as Card['brand'],
         last4: row[headers.indexOf('last4')],
         expiry: row[headers.indexOf('expiry')],
+        dueDate: parseInt(row[headers.indexOf('dueDate')], 10),
     }));
 }
 
 export async function addCardToSheet(card: Omit<Card, 'id'>) {
     const id = Date.now().toString();
     const newCard = { ...card, id };
-    await appendSheetData('cards', [newCard.id, newCard.name, newCard.brand, newCard.last4, newCard.expiry]);
+    await appendSheetData('cards', [newCard.id, newCard.name, newCard.brand, newCard.last4, newCard.expiry, newCard.dueDate]);
     return newCard;
 }
 

@@ -4,6 +4,7 @@ export interface Card {
   brand: 'visa' | 'mastercard' | 'amex' | 'elo';
   last4: string;
   expiry: string;
+  dueDate: number;
 }
 
 export interface Transaction {
