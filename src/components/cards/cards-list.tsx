@@ -1,6 +1,12 @@
 'use client';
 import type { Card } from '@/lib/types';
-import { Card as UICard, CardContent } from '@/components/ui/card';
+import { Card as UICard } from '@/components/ui/card';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useData } from '@/context/data-context';
+import { useToast } from '@/hooks/use-toast';
 
 const CardLogo = ({ brand }: { brand: Card['brand'] }) => {
     const svgs = {
@@ -13,15 +19,58 @@ const CardLogo = ({ brand }: { brand: Card['brand'] }) => {
 };
   
 
-export function CardsList({ cards }: { cards: Card[] }) {
+export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (card: Card) => void }) {
+    const { deleteCard } = useData();
+    const { toast } = useToast();
+
     if (cards.length === 0) {
         return <p className="text-muted-foreground text-center">Nenhum cartão cadastrado ainda.</p>
+    }
+
+    const handleDelete = async (cardId: string) => {
+        await deleteCard(cardId);
+        toast({ title: "Cartão deletado!", description: "O cartão e suas transações associadas foram removidos." });
     }
 
     return (
         <div className="grid md:grid-cols-2 gap-4">
             {cards.map((card) => (
-                <UICard key={card.id} className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-48 shadow-lg">
+                <UICard key={card.id} className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-48 shadow-lg relative">
+                    <div className="absolute top-2 right-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-white/20 hover:text-white">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => onEditCard(card)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Deletar
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Essa ação não pode ser desfeita. Isso irá deletar permanentemente o cartão e todas as suas transações associadas na interface.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(card.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                     <div className="flex justify-between items-start">
                         <span className="font-semibold text-lg">{card.name}</span>
                         <CardLogo brand={card.brand} />

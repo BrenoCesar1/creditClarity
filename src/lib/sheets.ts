@@ -170,6 +170,39 @@ export async function addCardToSheet(card: Omit<Card, 'id'>) {
     return newCard;
 }
 
+export async function updateCardInSheet(cardId: string, updates: Partial<Omit<Card, 'id'>>) {
+    const data = await getSheetData('cards');
+    const headers = data[0] || [];
+    const idIndex = headers.indexOf('id');
+    if (idIndex === -1) {
+        throw new Error("A coluna 'id' não foi encontrada na aba 'cards'.");
+    }
+
+    const rowIndex = data.findIndex(row => row[idIndex] === cardId);
+    if (rowIndex === -1) {
+        console.warn(`Cartão com id ${cardId} não encontrado. Não foi possível atualizar.`);
+        return;
+    }
+    const rowNumberInSheet = rowIndex + 1;
+
+    const headerMap = new Map(headers.map((h, i) => [h, i]));
+    const updatePromises: Promise<void>[] = [];
+
+    for (const key of Object.keys(updates)) {
+        if (key === 'id') continue;
+        const colIndex = headerMap.get(key);
+        if (colIndex !== undefined) {
+            const value = (updates as any)[key];
+            updatePromises.push(updateSheetCell('cards', rowNumberInSheet, colIndex, value ?? ''));
+        }
+    }
+    await Promise.all(updatePromises);
+}
+
+export async function deleteCardFromSheet(cardId: string) {
+    await deleteSheetRowById('cards', cardId);
+}
+
 
 // Transactions
 export async function getTransactions(): Promise<Transaction[]> {

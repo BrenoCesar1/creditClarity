@@ -4,9 +4,27 @@ import { AddCardForm } from "@/components/cards/add-card-form";
 import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
 import { CreditCard } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import type { Card as CardType } from "@/lib/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function CardsPage() {
-    const { cards, addCard } = useData();
+    const { cards, addCard, updateCard } = useData();
+    const { toast } = useToast();
+    const [editingCard, setEditingCard] = useState<CardType | null>(null);
+
+    const handleAddSubmit = async (values: Omit<CardType, 'id'>) => {
+        await addCard(values);
+        toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
+    };
+
+    const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
+        if (!editingCard) return;
+        await updateCard(editingCard.id, values);
+        setEditingCard(null);
+        toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
+    };
 
     return (
         <div className="grid gap-8">
@@ -16,7 +34,7 @@ export default function CardsPage() {
                     <CardDescription>Preencha os detalhes do seu novo cartão de crédito.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddCardForm onAddCard={addCard} />
+                    <AddCardForm onFormSubmit={handleAddSubmit} />
                 </CardContent>
             </Card>
 
@@ -26,9 +44,23 @@ export default function CardsPage() {
                     <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <CardsList cards={cards} />
+                    <CardsList cards={cards} onEditCard={setEditingCard} />
                 </CardContent>
             </Card>
+
+            {editingCard && (
+                <Dialog open={!!editingCard} onOpenChange={(open) => !open && setEditingCard(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Editar Cartão</DialogTitle>
+                        </DialogHeader>
+                        <AddCardForm
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleEditSubmit}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

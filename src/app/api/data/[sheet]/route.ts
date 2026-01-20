@@ -3,7 +3,7 @@ import {
     getCards, getTransactions, getDebts,
     addCardToSheet, addTransactionToSheet, addDebtToSheet,
     updateDebtInSheet, updateTransactionInSheet, deleteDebtFromSheet,
-    deleteTransactionFromSheet
+    deleteTransactionFromSheet, updateCardInSheet, deleteCardFromSheet
 } from '@/lib/sheets';
 import type { Card, Transaction, Debt } from '@/lib/types';
 
@@ -55,6 +55,7 @@ export async function PUT(
     try {
         if (sheet === 'transactions') await updateTransactionInSheet(id, updates);
         else if (sheet === 'debts') await updateDebtInSheet(id, updates);
+        else if (sheet === 'cards') await updateCardInSheet(id, updates);
         else return NextResponse.json({ error: 'Sheet not found or not updatable' }, { status: 404 });
         
         return NextResponse.json({ success: true }, { status: 200 });
@@ -79,6 +80,7 @@ export async function DELETE(
     try {
         if (sheet === 'debts') await deleteDebtFromSheet(id);
         else if (sheet === 'transactions') await deleteTransactionFromSheet(id);
+        else if (sheet === 'cards') await deleteCardFromSheet(id);
         else return NextResponse.json({ error: 'Sheet not found or not deletable' }, { status: 404 });
         
         return NextResponse.json({ success: true }, { status: 200 });

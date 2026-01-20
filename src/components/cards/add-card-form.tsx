@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Card } from '@/lib/types';
+import { useEffect } from 'react';
 
 const cardSchema = z.object({
   name: z.string().min(2, { message: 'O nome do cartão deve ter pelo menos 2 caracteres.' }),
@@ -18,21 +18,49 @@ const cardSchema = z.object({
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
 });
 
-export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>) => Promise<void> }) {
-  const { toast } = useToast();
-  const form = useForm<z.infer<typeof cardSchema>>({
+type CardFormValues = z.infer<typeof cardSchema>;
+
+interface AddCardFormProps {
+    onFormSubmit: (values: CardFormValues) => Promise<void>;
+    cardToEdit?: Card | null;
+}
+
+export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
+  const isEditMode = !!cardToEdit;
+  
+  const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
     defaultValues: {
       name: '',
+      brand: undefined,
       last4: '',
       expiry: '',
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof cardSchema>) => {
-    await onAddCard(values);
-    toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
-    form.reset();
+  useEffect(() => {
+    if (isEditMode && cardToEdit) {
+        form.reset({
+            name: cardToEdit.name,
+            brand: cardToEdit.brand,
+            last4: cardToEdit.last4,
+            expiry: cardToEdit.expiry,
+        });
+    } else {
+        form.reset({
+            name: '',
+            brand: undefined,
+            last4: '',
+            expiry: '',
+        });
+    }
+  }, [cardToEdit, isEditMode, form]);
+
+  const onSubmit = async (values: CardFormValues) => {
+    await onFormSubmit(values);
+    if (!isEditMode) {
+        form.reset();
+    }
   };
 
   return (
@@ -58,7 +86,7 @@ export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>)
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Bandeira</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />
@@ -104,7 +132,7 @@ export function AddCardForm({ onAddCard }: { onAddCard: (card: Omit<Card, 'id'>)
         </div>
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Adicionar Cartão
+          {isEditMode ? 'Salvar Alterações' : 'Adicionar Cartão'}
         </Button>
       </form>
     </Form>

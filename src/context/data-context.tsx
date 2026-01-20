@@ -9,6 +9,8 @@ interface DataContextType {
   transactions: Transaction[];
   debts: Debt[];
   addCard: (card: Omit<Card, 'id'>) => Promise<void>;
+  updateCard: (cardId: string, updates: Partial<Omit<Card, 'id'>>) => Promise<void>;
+  deleteCard: (cardId: string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   addDebt: (debt: Omit<Debt, 'id' | 'paid' | 'date'>) => Promise<void>;
   updateDebt: (debtId: string, updates: Partial<Omit<Debt, 'id'>>) => Promise<void>;
@@ -68,6 +70,23 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     });
     const newCard = await response.json();
     setCards(prev => [...prev, newCard]);
+  };
+
+  const updateCard = async (cardId: string, updates: Partial<Omit<Card, 'id'>>) => {
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, ...updates } : c));
+    await fetch('/api/data/cards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: cardId, updates }),
+    });
+  };
+
+  const deleteCard = async (cardId: string) => {
+      setCards(prev => prev.filter(c => c.id !== cardId));
+      setTransactions(prev => prev.filter(t => t.cardId !== cardId));
+      await fetch(`/api/data/cards?id=${cardId}`, {
+          method: 'DELETE',
+      });
   };
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
@@ -163,7 +182,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, deleteDebt, updateTransaction, deleteTransaction, loading }}>
+    <DataContext.Provider value={{ cards, transactions, debts, addCard, updateCard, deleteCard, addTransaction, addDebt, updateDebt, deleteDebt, updateTransaction, deleteTransaction, loading }}>
       {children}
     </DataContext.Provider>
   );
