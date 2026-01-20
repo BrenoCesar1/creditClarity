@@ -94,6 +94,54 @@ async function updateSheetCell(sheetName: string, rowIndex: number, colIndex: nu
     });
 }
 
+async function deleteSheetRowById(sheetName: string, id: string) {
+    const sheets = getSheets();
+    if (!SHEET_ID) {
+        throw new Error('A variável GOOGLE_SHEET_ID não foi encontrada no seu arquivo .env.');
+    }
+
+    const [data, spreadsheetMeta] = await Promise.all([
+        getSheetData(sheetName),
+        sheets.spreadsheets.get({ spreadsheetId: SHEET_ID }),
+    ]);
+    
+    const headers = data[0];
+    const idIndex = headers.indexOf('id');
+    if (idIndex === -1) throw new Error(`Coluna 'id' não encontrada na aba '${sheetName}'.`);
+
+    const rowIndexToDelete = data.findIndex(row => row[idIndex] === id);
+    
+    if (rowIndexToDelete === -1) {
+        console.warn(`Row with id ${id} not found in ${sheetName}. Nothing to delete.`);
+        return;
+    }
+
+    const sheetId = spreadsheetMeta.data.sheets?.find(s => s.properties?.title === sheetName)?.properties?.sheetId;
+
+    if (sheetId === null || sheetId === undefined) {
+        throw new Error(`Aba com o nome '${sheetName}' não foi encontrada na planilha.`);
+    }
+    
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: {
+            requests: [
+                {
+                    deleteDimension: {
+                        range: {
+                            sheetId: sheetId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndexToDelete,
+                            endIndex: rowIndexToDelete + 1,
+                        },
+                    },
+                },
+            ],
+        },
+    });
+}
+
+
 // --- Specific Functions ---
 
 // Cards
@@ -223,16 +271,55 @@ export async function addDebtToSheet(debt: Omit<Debt, 'id'>) {
     return newDebt;
 }
 
-export async function updateDebtInSheet(debtId: string, updates: Partial<Debt>) {
+export async function updateDebtInSheet(debtId: string, updates: Partial<Omit<Debt, 'id'>>) {
     const data = await getSheetData('debts');
     const headers = data[0] || [];
     const idIndex = headers.indexOf('id');
-    const paidIndex = headers.indexOf('paid');
-    if (idIndex === -1 || paidIndex === -1) return;
+    if (idIndex === -1) {
+        throw new Error("A coluna 'id' não foi encontrada na aba 'debts'.");
+    }
 
     const rowIndex = data.findIndex(row => row[idIndex] === debtId);
-
-    if (rowIndex !== -1 && updates.paid !== undefined) {
-         await updateSheetCell('debts', rowIndex + 1, paidIndex, updates.paid.toString());
+    if (rowIndex === -1) {
+        console.warn(`Dívida com id ${debtId} não encontrada. Não foi possível atualizar.`);
+        return;
     }
+    const rowNumberInSheet = rowIndex + 1;
+
+    const headerMap = new Map(headers.map((h, i) => [h, i]));
+    const updatePromises: Promise<void>[] = [];
+
+    // If person is being updated, also update avatarUrl
+    if ('person' in updates && updates.person) {
+        (updates as any).avatarUrl = `https://picsum.photos/seed/${updates.person.replace(/\s/g, '')}/40/40`;
+    }
+
+    for (const key of Object.keys(updates)) {
+        if (key === 'id') continue;
+        let value = (updates as any)[key];
+        
+        if (key === 'installments') {
+            const currentIdx = headerMap.get('installments_current');
+            if (currentIdx !== undefined) {
+                updatePromises.push(updateSheetCell('debts', rowNumberInSheet, currentIdx, value?.current ?? ''));
+            }
+            const totalIdx = headerMap.get('installments_total');
+            if (totalIdx !== undefined) {
+                updatePromises.push(updateSheetCell('debts', rowNumberInSheet, totalIdx, value?.total ?? ''));
+            }
+        } else {
+            const colIndex = headerMap.get(key);
+            if (colIndex !== undefined) {
+                if (typeof value === 'boolean') {
+                    value = value.toString();
+                }
+                updatePromises.push(updateSheetCell('debts', rowNumberInSheet, colIndex, value));
+            }
+        }
+    }
+    await Promise.all(updatePromises);
+}
+
+export async function deleteDebtFromSheet(debtId: string) {
+    await deleteSheetRowById('debts', debtId);
 }

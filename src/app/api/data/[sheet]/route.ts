@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { 
     getCards, getTransactions, getDebts,
     addCardToSheet, addTransactionToSheet, addDebtToSheet,
-    updateDebtInSheet, updateTransactionInSheet
+    updateDebtInSheet, updateTransactionInSheet, deleteDebtFromSheet
 } from '@/lib/sheets';
 import type { Card, Transaction, Debt } from '@/lib/types';
 
@@ -60,5 +60,28 @@ export async function PUT(
     } catch (error: any) {
         console.error(error);
         return NextResponse.json({ error: error.message || 'Falha ao atualizar dados na planilha.' }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: { sheet: string } }
+) {
+    const sheet = params.sheet;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+        return NextResponse.json({ error: 'ID do item é obrigatório' }, { status: 400 });
+    }
+
+    try {
+        if (sheet === 'debts') await deleteDebtFromSheet(id);
+        else return NextResponse.json({ error: 'Sheet not found or not deletable' }, { status: 404 });
+        
+        return NextResponse.json({ success: true }, { status: 200 });
+    } catch (error: any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message || 'Falha ao deletar dados na planilha.' }, { status: 500 });
     }
 }

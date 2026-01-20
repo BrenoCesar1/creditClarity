@@ -10,8 +10,9 @@ interface DataContextType {
   debts: Debt[];
   addCard: (card: Omit<Card, 'id'>) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  addDebt: (debt: Omit<Debt, 'id'>) => Promise<void>;
-  updateDebt: (debtId: string, updates: Partial<Debt>) => Promise<void>;
+  addDebt: (debt: Omit<Debt, 'id' | 'paid' | 'date'>) => Promise<void>;
+  updateDebt: (debtId: string, updates: Partial<Omit<Debt, 'id'>>) => Promise<void>;
+  deleteDebt: (debtId: string) => Promise<void>;
   updateTransaction: (transactionId: string, updates: Partial<Transaction>) => Promise<void>;
   loading: boolean;
 }
@@ -78,22 +79,47 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setTransactions(prev => [...prev, newTransaction].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
-  const addDebt = async (debt: Omit<Debt, 'id'>) => {
+  const addDebt = async (debt: Omit<Debt, 'id' | 'paid' | 'date'>) => {
+    const fullDebt: Omit<Debt, 'id'> = {
+        ...debt,
+        paid: false,
+        date: new Date().toISOString(),
+        avatarUrl: `https://picsum.photos/seed/${debt.person.replace(/\s/g, '')}/40/40`,
+    };
     const response = await fetch('/api/data/debts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(debt),
+        body: JSON.stringify(fullDebt),
     });
     const newDebt = await response.json();
     setDebts(prev => [...prev, newDebt]);
   };
   
-  const updateDebt = async (debtId: string, updates: Partial<Debt>) => {
-    setDebts(prev => prev.map(d => d.id === debtId ? { ...d, ...updates } : d));
+  const updateDebt = async (debtId: string, updates: Partial<Omit<Debt, 'id'>>) => {
+    // Optimistic update
+    setDebts(prev => prev.map(d => {
+        if (d.id === debtId) {
+            const newDebt = { ...d, ...updates };
+            // Recalculate avatar if person changes
+            if (updates.person) {
+                newDebt.avatarUrl = `https://picsum.photos/seed/${updates.person.replace(/\s/g, '')}/40/40`;
+            }
+            return newDebt;
+        }
+        return d;
+    }));
+    // API call
     await fetch('/api/data/debts', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: debtId, updates }),
+    });
+  };
+
+  const deleteDebt = async (debtId: string) => {
+    setDebts(prev => prev.filter(d => d.id !== debtId));
+    await fetch(`/api/data/debts?id=${debtId}`, {
+        method: 'DELETE',
     });
   };
 
@@ -129,7 +155,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, updateTransaction, loading }}>
+    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, deleteDebt, updateTransaction, loading }}>
       {children}
     </DataContext.Provider>
   );

@@ -6,9 +6,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Debt } from '@/lib/types';
+import { useEffect } from 'react';
 
 const debtSchema = z.object({
   person: z.string().min(2, { message: 'O nome da pessoa deve ter pelo menos 2 caracteres.' }),
@@ -18,9 +18,18 @@ const debtSchema = z.object({
   installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>) => Promise<void>}) {
-  const { toast } = useToast();
-  const form = useForm<z.infer<typeof debtSchema>>({
+type DebtFormValues = z.infer<typeof debtSchema>;
+
+interface AddDebtFormProps {
+    onFormSubmit: (debt: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => Promise<void>;
+    debtToEdit?: Debt | null;
+}
+
+export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
+  
+  const isEditMode = !!debtToEdit;
+
+  const form = useForm<DebtFormValues>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
       person: '',
@@ -28,14 +37,31 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof debtSchema>) => {
-    const debtData: Omit<Debt, 'id'> = {
+  useEffect(() => {
+    if (isEditMode) {
+        form.reset({
+            person: debtToEdit.person,
+            amount: debtToEdit.amount,
+            reason: debtToEdit.reason,
+            installmentsCurrent: debtToEdit.installments?.current,
+            installmentsTotal: debtToEdit.installments?.total,
+        });
+    } else {
+        form.reset({
+            person: '',
+            amount: undefined,
+            reason: '',
+            installmentsCurrent: undefined,
+            installmentsTotal: undefined
+        });
+    }
+  }, [debtToEdit, isEditMode, form]);
+
+  const onSubmit = async (values: DebtFormValues) => {
+    const debtData: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'> = {
         person: values.person,
         amount: values.amount,
         reason: values.reason,
-        paid: false,
-        date: new Date().toISOString(),
-        avatarUrl: `https://picsum.photos/seed/${values.person.replace(/\s/g, '')}/40/40`,
     };
 
     if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
@@ -43,11 +69,14 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
             current: values.installmentsCurrent,
             total: values.installmentsTotal
         }
+    } else {
+        debtData.installments = undefined;
     }
     
-    await onAddDebt(debtData);
-    toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
-    form.reset();
+    await onFormSubmit(debtData);
+    if (!isEditMode) {
+        form.reset();
+    }
   };
 
   return (
@@ -102,7 +131,7 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
                     <FormItem>
                     <FormLabel>Parcela Atual (opcional)</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="1" {...field} />
+                        <Input type="number" placeholder="1" {...field} value={field.value ?? ''}/>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -115,7 +144,7 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
                     <FormItem>
                     <FormLabel>Total de Parcelas (opcional)</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="12" {...field} />
+                        <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -124,7 +153,7 @@ export function AddDebtForm({ onAddDebt }: { onAddDebt: (debt: Omit<Debt, 'id'>)
         </div>
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Adicionar Dívida
+          {isEditMode ? 'Salvar Alterações' : 'Adicionar Dívida'}
         </Button>
       </form>
     </Form>
