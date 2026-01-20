@@ -22,6 +22,7 @@ const getAuth = () => {
         });
         return auth;
     } catch(error: any) {
+        // This block is a safeguard but the main error is caught in getSheetData
         if (error.message && error.message.includes('DECODER')) {
             throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
         }
@@ -50,6 +51,10 @@ async function getSheetData(sheetName: string): Promise<any[][]> {
         return response.data.values || [];
     } catch (error: any) {
         console.error(`Error fetching data from ${sheetName}:`, error);
+
+        if (error.message && (error.message.includes('DECODER') || error.message.includes('unsupported'))) {
+            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
+        }
         if (error.code === 403) { // Permission denied
              throw new Error(`Permissão negada para acessar a planilha. Verifique dois pontos: 1) Você compartilhou a planilha com o e-mail da conta de serviço ('${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}') e deu permissão de "Editor". 2) A API do Google Sheets está ativada no seu projeto Google Cloud.`);
         }
