@@ -16,6 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useData } from '@/context/data-context';
+import { useEffect } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -26,11 +27,19 @@ const transactionSchema = z.object({
   installmentsTotal: z.coerce.number().optional(),
 });
 
-export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void> }) {
+type TransactionFormValues = z.infer<typeof transactionSchema>;
+
+interface AddTransactionFormProps {
+    onFormSubmit: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+    transactionToEdit?: Transaction | null;
+}
+
+export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTransactionFormProps) {
   const { toast } = useToast();
   const { cards } = useData();
+  const isEditMode = !!transactionToEdit;
 
-  const form = useForm<z.infer<typeof transactionSchema>>({
+  const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       description: '',
@@ -38,12 +47,35 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof transactionSchema>) => {
+  useEffect(() => {
+    if (isEditMode && transactionToEdit) {
+        form.reset({
+            description: transactionToEdit.description,
+            amount: transactionToEdit.amount,
+            cardId: transactionToEdit.cardId,
+            date: new Date(transactionToEdit.date),
+            installmentsCurrent: transactionToEdit.installments?.current,
+            installmentsTotal: transactionToEdit.installments?.total,
+        });
+    } else {
+        form.reset({
+            description: '',
+            amount: undefined,
+            cardId: undefined,
+            date: new Date(),
+            installmentsCurrent: undefined,
+            installmentsTotal: undefined,
+        });
+    }
+  }, [transactionToEdit, isEditMode, form]);
+
+  const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
         description: values.description,
         amount: values.amount,
         cardId: values.cardId,
         date: values.date.toISOString(),
+        category: transactionToEdit?.category,
     };
 
     if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
@@ -51,11 +83,23 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
             current: values.installmentsCurrent,
             total: values.installmentsTotal
         }
+    } else {
+        transactionData.installments = undefined;
     }
     
-    await onAddTransaction(transactionData);
-    toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-    form.reset();
+    await onFormSubmit(transactionData);
+
+    if (!isEditMode) {
+      toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
+      form.reset({
+          description: '',
+          amount: undefined,
+          cardId: undefined,
+          date: new Date(),
+          installmentsCurrent: undefined,
+          installmentsTotal: undefined,
+      });
+    }
   };
 
   return (
@@ -95,7 +139,7 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Cartão</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={cards.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
@@ -162,7 +206,7 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
                     <FormItem>
                     <FormLabel>Parcela Atual (opcional)</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="1" {...field} />
+                        <Input type="number" placeholder="1" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -175,7 +219,7 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
                     <FormItem>
                     <FormLabel>Total de Parcelas (opcional)</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="12" {...field} />
+                        <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -186,7 +230,7 @@ export function AddTransactionForm({ onAddTransaction }: { onAddTransaction: (tr
 
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Adicionar Transação
+          {isEditMode ? 'Salvar Alterações' : 'Adicionar Transação'}
         </Button>
       </form>
     </Form>

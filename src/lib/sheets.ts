@@ -23,8 +23,8 @@ const getAuth = () => {
         return auth;
     } catch(error: any) {
         // This block is a safeguard but the main error is caught in getSheetData
-        if (error.message && error.message.includes('DECODER')) {
-            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
+        if (error.message && (error.message.includes('DECODER') || error.message.includes('unsupported'))) {
+            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
         }
         throw error;
     }
@@ -53,7 +53,7 @@ async function getSheetData(sheetName: string): Promise<any[][]> {
         console.error(`Error fetching data from ${sheetName}:`, error);
 
         if (error.message && (error.message.includes('DECODER') || error.message.includes('unsupported'))) {
-            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
+            throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
         }
         if (error.code === 403) { // Permission denied
              throw new Error(`Permissão negada para acessar a planilha. Verifique dois pontos: 1) Você compartilhou a planilha com o e-mail da conta de serviço ('${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}') e deu permissão de "Editor". 2) A API do Google Sheets está ativada no seu projeto Google Cloud.`);
@@ -212,21 +212,54 @@ export async function addTransactionToSheet(transaction: Omit<Transaction, 'id'>
     return newTransaction;
 }
 
-export async function updateTransactionInSheet(transactionId: string, updates: Partial<Transaction>) {
+export async function updateTransactionInSheet(transactionId: string, updates: Partial<Omit<Transaction, 'id'>>) {
     const data = await getSheetData('transactions');
     const headers = data[0] || [];
     const idIndex = headers.indexOf('id');
-    const categoryIndex = headers.indexOf('category');
-
-    if (idIndex === -1 || categoryIndex === -1) return;
+    if (idIndex === -1) {
+        throw new Error("A coluna 'id' não foi encontrada na aba 'transactions'.");
+    }
 
     const rowIndex = data.findIndex(row => row[idIndex] === transactionId);
-
-    if (rowIndex !== -1 && updates.category) {
-        await updateSheetCell('transactions', rowIndex + 1, categoryIndex, updates.category);
+    if (rowIndex === -1) {
+        console.warn(`Transação com id ${transactionId} não encontrada. Não foi possível atualizar.`);
+        return;
     }
+    const rowNumberInSheet = rowIndex + 1;
+
+    const headerMap = new Map(headers.map((h, i) => [h, i]));
+    const updatePromises: Promise<void>[] = [];
+
+    for (const key of Object.keys(updates)) {
+        if (key === 'id') continue;
+        
+        let value = (updates as any)[key];
+        
+        if (key === 'installments') {
+            const currentIdx = headerMap.get('installments_current');
+            if (currentIdx !== undefined) {
+                updatePromises.push(updateSheetCell('transactions', rowNumberInSheet, currentIdx, value?.current ?? ''));
+            }
+            const totalIdx = headerMap.get('installments_total');
+            if (totalIdx !== undefined) {
+                updatePromises.push(updateSheetCell('transactions', rowNumberInSheet, totalIdx, value?.total ?? ''));
+            }
+        } else {
+            const colIndex = headerMap.get(key);
+            if (colIndex !== undefined) {
+                if (typeof value === 'boolean') {
+                    value = value.toString();
+                }
+                updatePromises.push(updateSheetCell('transactions', rowNumberInSheet, colIndex, value ?? ''));
+            }
+        }
+    }
+    await Promise.all(updatePromises);
 }
 
+export async function deleteTransactionFromSheet(transactionId: string) {
+    await deleteSheetRowById('transactions', transactionId);
+}
 
 // Debts
 export async function getDebts(): Promise<Debt[]> {

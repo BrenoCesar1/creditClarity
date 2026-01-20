@@ -13,7 +13,8 @@ interface DataContextType {
   addDebt: (debt: Omit<Debt, 'id' | 'paid' | 'date'>) => Promise<void>;
   updateDebt: (debtId: string, updates: Partial<Omit<Debt, 'id'>>) => Promise<void>;
   deleteDebt: (debtId: string) => Promise<void>;
-  updateTransaction: (transactionId: string, updates: Partial<Transaction>) => Promise<void>;
+  updateTransaction: (transactionId: string, updates: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -123,13 +124,20 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>) => {
-      setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, ...updates } : t));
+  const updateTransaction = async (transactionId: string, updates: Partial<Omit<Transaction, 'id'>>) => {
+      setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, ...updates } : t).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       await fetch('/api/data/transactions', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: transactionId, updates }),
       });
+  };
+
+  const deleteTransaction = async (transactionId: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== transactionId));
+    await fetch(`/api/data/transactions?id=${transactionId}`, {
+        method: 'DELETE',
+    });
   };
 
   if (loading) {
@@ -155,7 +163,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, deleteDebt, updateTransaction, loading }}>
+    <DataContext.Provider value={{ cards, transactions, debts, addCard, addTransaction, addDebt, updateDebt, deleteDebt, updateTransaction, deleteTransaction, loading }}>
       {children}
     </DataContext.Provider>
   );

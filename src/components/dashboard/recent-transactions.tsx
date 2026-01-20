@@ -13,12 +13,16 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit, Loader2 } from 'lucide-react';
+import { BrainCircuit, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { categorizePurchases } from '@/ai/flows/categorize-purchases';
 import { useToast } from '@/hooks/use-toast';
 import CategoryIcon from './category-icon';
 import { Skeleton } from '../ui/skeleton';
 import { useData } from '@/context/data-context';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AddTransactionForm } from '../transactions/add-transaction-form';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -39,10 +43,11 @@ function formatDate(dateString: string) {
 }
 
 export function RecentTransactions() {
-  const { transactions, updateTransaction } = useData();
+  const { transactions, updateTransaction, deleteTransaction } = useData();
   const [isCategorizing, setIsCategorizing] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -66,6 +71,8 @@ export function RecentTransactions() {
     try {
       const result = await categorizePurchases({ purchases: uncategorized });
       
+      const transactionsToUpdate: { id: string, updates: Partial<Transaction> }[] = [];
+
       result.categories.forEach(categorizedPurchase => {
         const transactionToUpdate = transactions.find(
           (t) => !t.category && t.description === categorizedPurchase.description && t.amount === categorizedPurchase.amount
@@ -81,9 +88,11 @@ export function RecentTransactions() {
           };
           const newCategory = categoryMap[categorizedPurchase.category.toLowerCase()] || 'Outros';
           
-          updateTransaction(transactionToUpdate.id, { category: newCategory });
+          transactionsToUpdate.push({ id: transactionToUpdate.id, updates: { category: newCategory } });
         }
       });
+
+      await Promise.all(transactionsToUpdate.map(t => updateTransaction(t.id, t.updates)));
       
       toast({
         title: 'Categorias aplicadas!',
@@ -99,6 +108,20 @@ export function RecentTransactions() {
     } finally {
       setIsCategorizing(false);
     }
+  };
+
+  const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
+    if (!editingTransaction) return;
+    await updateTransaction(editingTransaction.id, values);
+    setEditingTransaction(null);
+    toast({ title: 'Transação atualizada com sucesso!' });
+  };
+
+  const handleDelete = async (transactionId: string) => {
+    await deleteTransaction(transactionId);
+    toast({
+        title: "Transação deletada!",
+    });
   };
 
   return (
@@ -125,6 +148,7 @@ export function RecentTransactions() {
               <TableHead className="hidden sm:table-cell">Categoria</TableHead>
               <TableHead className="hidden md:table-cell">Data</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[50px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -150,11 +174,59 @@ export function RecentTransactions() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}</TableCell>
                 <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => setEditingTransaction(transaction)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Deletar
+                                  </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </CardContent>
+       {editingTransaction && (
+            <Dialog open={!!editingTransaction} onOpenChange={(open) => !open && setEditingTransaction(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Editar Transação</DialogTitle>
+                    </DialogHeader>
+                    <AddTransactionForm
+                        transactionToEdit={editingTransaction}
+                        onFormSubmit={handleEditSubmit}
+                    />
+                </DialogContent>
+            </Dialog>
+        )}
     </Card>
   );
 }

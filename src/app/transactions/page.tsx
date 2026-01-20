@@ -16,7 +16,7 @@ export default function TransactionsPage() {
                     <CardDescription>Registre uma nova transação em um de seus cartões.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddTransactionForm onAddTransaction={addTransaction} />
+                    <AddTransactionForm onFormSubmit={addTransaction} />
                 </CardContent>
             </Card>
 

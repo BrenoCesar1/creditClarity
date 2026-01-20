@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { 
     getCards, getTransactions, getDebts,
     addCardToSheet, addTransactionToSheet, addDebtToSheet,
-    updateDebtInSheet, updateTransactionInSheet, deleteDebtFromSheet
+    updateDebtInSheet, updateTransactionInSheet, deleteDebtFromSheet,
+    deleteTransactionFromSheet
 } from '@/lib/sheets';
 import type { Card, Transaction, Debt } from '@/lib/types';
 
@@ -77,6 +78,7 @@ export async function DELETE(
 
     try {
         if (sheet === 'debts') await deleteDebtFromSheet(id);
+        else if (sheet === 'transactions') await deleteTransactionFromSheet(id);
         else return NextResponse.json({ error: 'Sheet not found or not deletable' }, { status: 404 });
         
         return NextResponse.json({ success: true }, { status: 200 });
