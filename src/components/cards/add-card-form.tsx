@@ -36,7 +36,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
       brand: cardToEdit?.brand,
       last4: cardToEdit?.last4 || '',
       expiry: cardToEdit?.expiry || '',
-      dueDate: cardToEdit?.dueDate,
+      dueDate: cardToEdit?.dueDate || undefined,
     }
   });
 

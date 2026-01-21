@@ -43,11 +43,11 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       description: transactionToEdit?.description || '',
-      amount: transactionToEdit?.amount,
-      cardId: transactionToEdit?.cardId,
+      amount: transactionToEdit?.amount || undefined,
+      cardId: transactionToEdit?.cardId || undefined,
       date: transactionToEdit ? new Date(transactionToEdit.date) : new Date(),
-      installmentsCurrent: transactionToEdit?.installments?.current,
-      installmentsTotal: transactionToEdit?.installments?.total,
+      installmentsCurrent: transactionToEdit?.installments?.current || undefined,
+      installmentsTotal: transactionToEdit?.installments?.total || undefined,
     }
   });
 

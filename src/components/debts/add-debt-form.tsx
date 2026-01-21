@@ -33,10 +33,10 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
     resolver: zodResolver(debtSchema),
     defaultValues: {
       person: debtToEdit?.person || '',
-      amount: debtToEdit?.amount,
+      amount: debtToEdit?.amount || undefined,
       reason: debtToEdit?.reason || '',
-      installmentsCurrent: debtToEdit?.installments?.current,
-      installmentsTotal: debtToEdit?.installments?.total,
+      installmentsCurrent: debtToEdit?.installments?.current || undefined,
+      installmentsTotal: debtToEdit?.installments?.total || undefined,
     }
   });
 

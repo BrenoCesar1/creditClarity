@@ -15,12 +15,13 @@ export default function DebtsPage() {
     const { toast } = useToast();
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
-        if (editingDebt) {
+        if (dialogMode === 'edit' && editingDebt) {
             await updateDebt(editingDebt.id, values);
             toast({ title: 'Sucesso!', description: 'Dívida atualizada.' });
-        } else {
+        } else if (dialogMode === 'add') {
             await addDebt(values);
             toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
         }
@@ -29,44 +30,53 @@ export default function DebtsPage() {
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
+        setDialogMode('edit');
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
+        setDialogMode('add');
         setIsDialogOpen(true);
     };
+
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            setDialogMode(null);
+        }
+    }
     
     return (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <div className="grid gap-8">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Minhas Dívidas a Receber</CardTitle>
-                            <CardDescription>Sua lista de dívidas a receber.</CardDescription>
-                        </div>
-                        <Button onClick={handleAddClick}>
-                            <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        <DebtsList debts={debts} onEditDebt={handleEditClick} />
-                    </CardContent>
-                </Card>
-            </div>
-            <DialogContent>
-                 <DialogHeader>
-                    <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                </DialogHeader>
-                {isDialogOpen && (
-                    <AddDebtForm
-                        debtToEdit={editingDebt}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                )}
-            </DialogContent>
-        </Dialog>
+        <>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Minhas Dívidas a Receber</CardTitle>
+                        <CardDescription>Sua lista de dívidas a receber.</CardDescription>
+                    </div>
+                    <Button onClick={handleAddClick}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    <DebtsList debts={debts} onEditDebt={handleEditClick} />
+                </CardContent>
+            </Card>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+                <DialogContent>
+                     <DialogHeader>
+                        <DialogTitle>{dialogMode === 'edit' ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
+                    </DialogHeader>
+                    {dialogMode && (
+                        <AddDebtForm
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

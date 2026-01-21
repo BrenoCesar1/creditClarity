@@ -39,6 +39,7 @@ export default function TransactionsPage() {
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
@@ -47,10 +48,10 @@ export default function TransactionsPage() {
     }, []);
 
     const handleFormSubmit = async (values: Omit<Transaction, 'id'>) => {
-        if (editingTransaction) {
+        if (dialogMode === 'edit' && editingTransaction) {
             await updateTransaction(editingTransaction.id, values);
             toast({ title: 'Transação atualizada com sucesso!' });
-        } else {
+        } else if (dialogMode === 'add') {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
@@ -59,11 +60,13 @@ export default function TransactionsPage() {
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
+        setDialogMode('edit');
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
+        setDialogMode('add');
         setIsDialogOpen(true);
     };
     
@@ -73,6 +76,13 @@ export default function TransactionsPage() {
             title: "Transação deletada!",
         });
     };
+    
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            setDialogMode(null);
+        }
+    }
 
     const handleCategorize = async () => {
         setIsCategorizing(true);
@@ -132,118 +142,118 @@ export default function TransactionsPage() {
     };
     
     return (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <div className="grid gap-8">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Histórico de Transações</CardTitle>
-                            <CardDescription>Seu histórico completo de transações.</CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
-                                {isCategorizing ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <BrainCircuit className="mr-2 h-4 w-4" />
+        <>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Histórico de Transações</CardTitle>
+                        <CardDescription>Seu histórico completo de transações.</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
+                            {isCategorizing ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <BrainCircuit className="mr-2 h-4 w-4" />
+                            )}
+                            Categorizar com IA
+                        </Button>
+                        <Button onClick={handleAddClick}>
+                            <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead>Descrição</TableHead>
+                            <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                            <TableHead className="hidden md:table-cell">Data</TableHead>
+                            <TableHead className="text-right">Valor</TableHead>
+                            <TableHead className="w-[50px] text-right">Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((transaction) => (
+                            <TableRow key={transaction.id}>
+                                <TableCell>
+                                <div className="font-medium">{transaction.description}</div>
+                                {transaction.installments && (
+                                    <div className="text-xs text-muted-foreground">
+                                    Parcela {transaction.installments.current}/{transaction.installments.total}
+                                    {' '}({transaction.installments.total - transaction.installments.current} restantes)
+                                    </div>
                                 )}
-                                Categorizar com IA
-                            </Button>
-                            <Button onClick={handleAddClick}>
-                                <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead className="hidden sm:table-cell">Categoria</TableHead>
-                                <TableHead className="hidden md:table-cell">Data</TableHead>
-                                <TableHead className="text-right">Valor</TableHead>
-                                <TableHead className="w-[50px] text-right">Ações</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((transaction) => (
-                                <TableRow key={transaction.id}>
-                                    <TableCell>
-                                    <div className="font-medium">{transaction.description}</div>
-                                    {transaction.installments && (
-                                        <div className="text-xs text-muted-foreground">
-                                        Parcela {transaction.installments.current}/{transaction.installments.total}
-                                        {' '}({transaction.installments.total - transaction.installments.current} restantes)
-                                        </div>
-                                    )}
-                                    </TableCell>
-                                    <TableCell className="hidden sm:table-cell">
-                                    {transaction.category ? (
-                                        <Badge variant="secondary" className="flex items-center gap-2 w-fit">
-                                            <CategoryIcon category={transaction.category} className="h-4 w-4"/>
-                                            {transaction.category}
-                                        </Badge>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">Não categorizado</span>
-                                    )}
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell">
+                                {transaction.category ? (
+                                    <Badge variant="secondary" className="flex items-center gap-2 w-fit">
+                                        <CategoryIcon category={transaction.category} className="h-4 w-4"/>
+                                        {transaction.category}
+                                    </Badge>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground">Não categorizado</span>
+                                )}
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}
 </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
-                                    <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Editar
-                                            </DropdownMenuItem>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Deletar
-                                                    </DropdownMenuItem>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
-             <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                </DialogHeader>
-                {isDialogOpen && (
-                    <AddTransactionForm
-                        transactionToEdit={editingTransaction}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                )}
-            </DialogContent>
-        </Dialog>
+                                <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
+                                <TableCell>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Editar
+                                        </DropdownMenuItem>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Deletar
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{dialogMode === 'edit' ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                    </DialogHeader>
+                    {dialogMode && (
+                        <AddTransactionForm
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
