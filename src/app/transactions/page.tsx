@@ -18,21 +18,27 @@ export default function TransactionsPage() {
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false);
+        setIsEditingOpen(false); // Isto fechará o diálogo.
         toast({ title: 'Transação atualizada com sucesso!' });
     };
 
     const handleEditClick = (transaction: Transaction) => {
+        console.log("Abrindo modal de edição para a transação:", transaction.id);
         setEditingTransaction(transaction);
         setIsEditingOpen(true);
     };
 
-    const onDialogClose = (open: boolean) => {
+    const onOpenChange = (open: boolean) => {
+        console.log("Dialog onOpenChange acionado. Novo estado:", open);
         if (!open) {
+            // Quando o diálogo fecha, limpa a transação que está sendo editada.
+            // Isso garante que o formulário esteja limpo para o próximo uso.
             setEditingTransaction(null);
         }
         setIsEditingOpen(open);
     }
+    
+    console.log("Renderização da TransactionsPage. isEditingOpen:", isEditingOpen, "ID da transação em edição:", editingTransaction?.id);
 
     return (
         <div className="grid gap-8">
@@ -56,7 +62,7 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={onDialogClose}>
+            <Dialog open={isEditingOpen} onOpenChange={onOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Transação</DialogTitle>
