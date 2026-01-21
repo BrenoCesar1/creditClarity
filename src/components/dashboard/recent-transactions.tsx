@@ -215,19 +215,17 @@ export function RecentTransactions() {
           </TableBody>
         </Table>
       </CardContent>
-       {editingTransaction && (
-            <Dialog open={!!editingTransaction} onOpenChange={(open) => !open && setEditingTransaction(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Transação</DialogTitle>
-                    </DialogHeader>
-                    <AddTransactionForm
-                        transactionToEdit={editingTransaction}
-                        onFormSubmit={handleEditSubmit}
-                    />
-                </DialogContent>
-            </Dialog>
-        )}
+       <Dialog open={!!editingTransaction} onOpenChange={(open) => {if (!open) setEditingTransaction(null)}}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar Transação</DialogTitle>
+                </DialogHeader>
+                <AddTransactionForm
+                    transactionToEdit={editingTransaction}
+                    onFormSubmit={handleEditSubmit}
+                />
+            </DialogContent>
+        </Dialog>
     </Card>
   );
 }

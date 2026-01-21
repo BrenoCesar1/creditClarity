@@ -48,19 +48,17 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            {editingCard && (
-                <Dialog open={!!editingCard} onOpenChange={(open) => !open && setEditingCard(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Editar Cartão</DialogTitle>
-                        </DialogHeader>
-                        <AddCardForm
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleEditSubmit}
-                        />
-                    </DialogContent>
-                </Dialog>
-            )}
+            <Dialog open={!!editingCard} onOpenChange={(open) => {if (!open) setEditingCard(null)}}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Editar Cartão</DialogTitle>
+                    </DialogHeader>
+                    <AddCardForm
+                        cardToEdit={editingCard}
+                        onFormSubmit={handleEditSubmit}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -124,19 +124,17 @@ export function DebtsList({ debts }: { debts: Debt[] }) {
               </div>
             </div>
           ))}
-           {editingDebt && (
-                <Dialog open={!!editingDebt} onOpenChange={(open) => !open && setEditingDebt(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Editar Dívida</DialogTitle>
-                        </DialogHeader>
-                        <AddDebtForm
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleEditSubmit}
-                        />
-                    </DialogContent>
-                </Dialog>
-            )}
+            <Dialog open={!!editingDebt} onOpenChange={(open) => {if (!open) setEditingDebt(null)}}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Editar Dívida</DialogTitle>
+                    </DialogHeader>
+                    <AddDebtForm
+                        debtToEdit={editingDebt}
+                        onFormSubmit={handleEditSubmit}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
