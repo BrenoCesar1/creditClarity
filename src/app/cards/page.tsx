@@ -5,7 +5,7 @@ import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
 import { CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Card as CardType } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -15,6 +15,14 @@ export default function CardsPage() {
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
+    // This effect ensures that when the dialog is closed, the editing state is cleared.
+    // This prevents stale data and potential race conditions.
+    useEffect(() => {
+        if (!isEditingOpen) {
+            setEditingCard(null);
+        }
+    }, [isEditingOpen]);
+
     const handleAddSubmit = async (values: Omit<CardType, 'id'>) => {
         await addCard(values);
         toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
@@ -23,7 +31,7 @@ export default function CardsPage() {
     const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
         if (!editingCard) return;
         await updateCard(editingCard.id, values);
-        setIsEditingOpen(false);
+        setIsEditingOpen(false); // Close the dialog
         toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
     };
 
@@ -31,13 +39,6 @@ export default function CardsPage() {
         setEditingCard(card);
         setIsEditingOpen(true);
     };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsEditingOpen(open);
-        if (!open) {
-            setEditingCard(null);
-        }
-    }
 
     return (
         <div className="grid gap-8">
@@ -61,11 +62,12 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={handleOpenChange}>
+            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Cartão</DialogTitle>
                     </DialogHeader>
+                    {/* The form is only rendered when there's a card to edit, ensuring a clean state. */}
                     {editingCard && (
                         <AddCardForm
                             cardToEdit={editingCard}

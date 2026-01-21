@@ -53,7 +53,8 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   });
 
   useEffect(() => {
-    if (transactionToEdit) {
+    // Only reset the form if we are in edit mode and have a transaction
+    if (isEditMode && transactionToEdit) {
       form.reset({
         description: transactionToEdit.description,
         amount: transactionToEdit.amount,
@@ -62,17 +63,8 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
         installmentsCurrent: transactionToEdit.installments?.current,
         installmentsTotal: transactionToEdit.installments?.total,
       });
-    } else {
-        form.reset({
-            description: '',
-            amount: 0,
-            cardId: undefined,
-            date: new Date(),
-            installmentsCurrent: undefined,
-            installmentsTotal: undefined,
-        });
     }
-  }, [transactionToEdit, form]);
+  }, [isEditMode, transactionToEdit, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
@@ -80,7 +72,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
         amount: values.amount,
         cardId: values.cardId,
         date: values.date.toISOString(),
-        category: isEditMode ? transactionToEdit.category : undefined,
+        category: isEditMode ? transactionToEdit?.category : undefined,
     };
 
     if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
@@ -96,7 +88,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
 
     if (!isEditMode) {
       toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-      form.reset();
+      form.reset(); // Reset for "add new" form after successful submission
     }
   };
 
@@ -183,7 +175,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
                         mode="single"
                         selected={field.value}
                         onSelect={(date) => {
-                            field.onChange(date);
+                            if(date) field.onChange(date);
                             setIsCalendarOpen(false);
                         }}
                         disabled={(date) =>

@@ -4,7 +4,7 @@ import { AddTransactionForm } from "@/components/transactions/add-transaction-fo
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { useData } from "@/context/data-context";
 import { ArrowLeftRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,14 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
+    // This effect ensures that when the dialog is closed, the editing state is cleared.
+    // This prevents stale data and potential race conditions.
+    useEffect(() => {
+        if (!isEditingOpen) {
+            setEditingTransaction(null);
+        }
+    }, [isEditingOpen]);
+
     const handleAddSubmit = async (values: Omit<Transaction, 'id'>) => {
         await addTransaction(values);
     };
@@ -22,7 +30,7 @@ export default function TransactionsPage() {
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false);
+        setIsEditingOpen(false); // Close the dialog
         toast({ title: 'Transação atualizada com sucesso!' });
     };
 
@@ -30,13 +38,6 @@ export default function TransactionsPage() {
         setEditingTransaction(transaction);
         setIsEditingOpen(true);
     };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsEditingOpen(open);
-        if (!open) {
-            setEditingTransaction(null);
-        }
-    }
 
     return (
         <div className="grid gap-8">
@@ -60,11 +61,12 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={handleOpenChange}>
+            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Transação</DialogTitle>
                     </DialogHeader>
+                    {/* The form is only rendered when there's a transaction to edit, ensuring a clean state. */}
                     {editingTransaction && (
                         <AddTransactionForm
                             transactionToEdit={editingTransaction}
