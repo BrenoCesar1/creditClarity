@@ -39,9 +39,6 @@ export default function CardsPage() {
 
     const handleSheetOpenChange = (open: boolean) => {
         setIsSheetOpen(open);
-        if (!open) {
-            setEditingCard(null);
-        }
     };
 
     return (

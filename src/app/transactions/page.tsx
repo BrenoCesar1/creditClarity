@@ -39,9 +39,6 @@ export default function TransactionsPage() {
     
     const handleSheetOpenChange = (open: boolean) => {
         setIsSheetOpen(open);
-        if (!open) {
-            setEditingTransaction(null);
-        }
     };
 
     return (

@@ -39,9 +39,6 @@ export default function DebtsPage() {
     
     const handleSheetOpenChange = (open: boolean) => {
         setIsSheetOpen(open);
-        if (!open) {
-            setEditingDebt(null);
-        }
     };
 
     return (
