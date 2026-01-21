@@ -49,6 +49,14 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
             installmentsCurrent: debtToEdit.installments?.current,
             installmentsTotal: debtToEdit.installments?.total,
         });
+    } else {
+        form.reset({
+            person: '',
+            amount: undefined,
+            reason: '',
+            installmentsCurrent: undefined,
+            installmentsTotal: undefined,
+        });
     }
   }, [debtToEdit, form]);
 

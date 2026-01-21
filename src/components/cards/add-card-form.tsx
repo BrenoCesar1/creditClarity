@@ -49,6 +49,14 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             expiry: cardToEdit.expiry,
             dueDate: cardToEdit.dueDate,
         });
+    } else {
+        form.reset({
+            name: '',
+            brand: undefined,
+            last4: '',
+            expiry: '',
+            dueDate: undefined,
+        });
     }
   }, [cardToEdit, form]);
 

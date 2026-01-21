@@ -61,6 +61,15 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
             installmentsCurrent: transactionToEdit.installments?.current,
             installmentsTotal: transactionToEdit.installments?.total,
         });
+    } else {
+        form.reset({
+            description: '',
+            amount: undefined,
+            cardId: undefined,
+            date: new Date(),
+            installmentsCurrent: undefined,
+            installmentsTotal: undefined,
+        });
     }
   }, [transactionToEdit, form]);
 
