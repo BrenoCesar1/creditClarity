@@ -32,6 +32,13 @@ export default function CardsPage() {
         setIsEditingOpen(true);
     };
 
+    const onDialogClose = (open: boolean) => {
+        if (!open) {
+            setEditingCard(null);
+        }
+        setIsEditingOpen(open);
+    }
+
     return (
         <div className="grid gap-8">
              <Card>
@@ -54,7 +61,7 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+            <Dialog open={isEditingOpen} onOpenChange={onDialogClose}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Cartão</DialogTitle>

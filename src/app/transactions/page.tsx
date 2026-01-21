@@ -27,6 +27,13 @@ export default function TransactionsPage() {
         setIsEditingOpen(true);
     };
 
+    const onDialogClose = (open: boolean) => {
+        if (!open) {
+            setEditingTransaction(null);
+        }
+        setIsEditingOpen(open);
+    }
+
     return (
         <div className="grid gap-8">
              <Card>
@@ -49,7 +56,7 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+            <Dialog open={isEditingOpen} onOpenChange={onDialogClose}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Transação</DialogTitle>
