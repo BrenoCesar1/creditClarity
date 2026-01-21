@@ -36,6 +36,13 @@ export default function DebtsPage() {
         setEditingDebt(null);
         setIsDialogOpen(true);
     };
+
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            setEditingDebt(null);
+        }
+    }
     
     return (
         <div className="grid gap-8">
@@ -54,16 +61,18 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                       <AddDebtForm
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleFormSubmit}
-                        />
+                       {isDialogOpen && (
+                           <AddDebtForm
+                                debtToEdit={editingDebt}
+                                onFormSubmit={handleFormSubmit}
+                            />
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

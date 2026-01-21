@@ -37,6 +37,13 @@ export default function CardsPage() {
         setIsDialogOpen(true);
     };
 
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            setEditingCard(null);
+        }
+    }
+
     return (
         <div className="grid gap-8">
             <Card>
@@ -54,16 +61,18 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <AddCardForm
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleFormSubmit}
-                        />
+                        {isDialogOpen && (
+                            <AddCardForm
+                                cardToEdit={editingCard}
+                                onFormSubmit={handleFormSubmit}
+                            />
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

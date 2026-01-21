@@ -36,6 +36,13 @@ export default function TransactionsPage() {
         setEditingTransaction(null);
         setIsDialogOpen(true);
     };
+
+    const handleOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            setEditingTransaction(null);
+        }
+    }
     
     return (
         <div className="grid gap-8">
@@ -54,16 +61,18 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <AddTransactionForm
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                        />
+                        {isDialogOpen && (
+                            <AddTransactionForm
+                                transactionToEdit={editingTransaction}
+                                onFormSubmit={handleFormSubmit}
+                            />
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

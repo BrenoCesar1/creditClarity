@@ -15,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useData } from '@/context/data-context';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -49,17 +49,6 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
       installmentsTotal: transactionToEdit?.installments?.total,
     }
   });
-
-  useEffect(() => {
-    form.reset({
-      description: transactionToEdit?.description || '',
-      amount: transactionToEdit?.amount,
-      cardId: transactionToEdit?.cardId,
-      date: transactionToEdit ? new Date(transactionToEdit.date) : new Date(),
-      installmentsCurrent: transactionToEdit?.installments?.current,
-      installmentsTotal: transactionToEdit?.installments?.total,
-    });
-  }, [transactionToEdit, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
