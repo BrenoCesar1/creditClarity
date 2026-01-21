@@ -41,9 +41,6 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
 
   const onSubmit = async (values: CardFormValues) => {
     await onFormSubmit(values);
-    if (!isEditMode) {
-        form.reset();
-    }
   };
 
   return (

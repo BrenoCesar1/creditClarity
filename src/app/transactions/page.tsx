@@ -3,74 +3,74 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AddTransactionForm } from "@/components/transactions/add-transaction-form";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { useData } from "@/context/data-context";
-import { ArrowLeftRight } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function TransactionsPage() {
     const { addTransaction, updateTransaction } = useData();
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [isEditingOpen, setIsEditingOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    useEffect(() => {
-        if (!isEditingOpen) {
-            setEditingTransaction(null);
+    const handleFormSubmit = async (values: Omit<Transaction, 'id'>) => {
+        if (editingTransaction) {
+            await updateTransaction(editingTransaction.id, values);
+            toast({ title: 'Transação atualizada com sucesso!' });
+        } else {
+            await addTransaction(values);
+            toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-    }, [isEditingOpen]);
-
-    const handleAddSubmit = async (values: Omit<Transaction, 'id'>) => {
-        await addTransaction(values);
-    };
-
-    const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
-        if (!editingTransaction) return;
-        await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false);
-        toast({ title: 'Transação atualizada com sucesso!' });
+        setIsSheetOpen(false);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setIsEditingOpen(true);
+        setIsSheetOpen(true);
     };
+
+    const handleAddClick = () => {
+        setEditingTransaction(null);
+        setIsSheetOpen(true);
+    };
+    
+    useEffect(() => {
+        if (!isSheetOpen) {
+            setEditingTransaction(null);
+        }
+    }, [isSheetOpen]);
 
     return (
         <div className="grid gap-8">
              <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ArrowLeftRight /> Adicionar Nova Transação</CardTitle>
-                    <CardDescription>Registre uma nova transação em um de seus cartões.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AddTransactionForm onFormSubmit={handleAddSubmit} />
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Histórico de Transações</CardTitle>
-                    <CardDescription>Seu histórico completo de transações.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Histórico de Transações</CardTitle>
+                        <CardDescription>Seu histórico completo de transações.</CardDescription>
+                    </div>
+                     <Button onClick={handleAddClick}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <RecentTransactions onEditTransaction={handleEditClick} />
                 </CardContent>
             </Card>
 
-            <Sheet open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>Editar Transação</SheetTitle>
+                        <SheetTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</SheetTitle>
                     </SheetHeader>
                     <div className="py-4">
-                        {editingTransaction && (
-                            <AddTransactionForm
-                                transactionToEdit={editingTransaction}
-                                onFormSubmit={handleEditSubmit}
-                            />
-                        )}
+                        <AddTransactionForm
+                            key={editingTransaction?.id || 'new'}
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                        />
                     </div>
                 </SheetContent>
             </Sheet>

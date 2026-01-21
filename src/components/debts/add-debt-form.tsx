@@ -56,9 +56,6 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
     }
     
     await onFormSubmit(debtData);
-    if (!isEditMode) {
-        form.reset();
-    }
   };
 
   return (

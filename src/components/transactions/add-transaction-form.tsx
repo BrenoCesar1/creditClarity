@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { Transaction } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -35,7 +34,6 @@ interface AddTransactionFormProps {
 }
 
 export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTransactionFormProps) {
-  const { toast } = useToast();
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -71,11 +69,6 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
     }
     
     await onFormSubmit(transactionData);
-
-    if (!isEditMode) {
-      toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-      form.reset();
-    }
   };
 
   return (

@@ -3,75 +3,74 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AddCardForm } from "@/components/cards/add-card-form";
 import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
-import { CreditCard } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { Card as CardType } from "@/lib/types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
-    const [isEditingOpen, setIsEditingOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    useEffect(() => {
-        if (!isEditingOpen) {
-            setEditingCard(null);
+    const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
+        if (editingCard) {
+            await updateCard(editingCard.id, values);
+            toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
+        } else {
+            await addCard(values);
+            toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
         }
-    }, [isEditingOpen]);
-
-    const handleAddSubmit = async (values: Omit<CardType, 'id'>) => {
-        await addCard(values);
-        toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
-    };
-
-    const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
-        if (!editingCard) return;
-        await updateCard(editingCard.id, values);
-        setIsEditingOpen(false);
-        toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
+        setIsSheetOpen(false);
     };
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setIsEditingOpen(true);
+        setIsSheetOpen(true);
     };
+
+    const handleAddClick = () => {
+        setEditingCard(null);
+        setIsSheetOpen(true);
+    };
+
+    useEffect(() => {
+        if (!isSheetOpen) {
+            setEditingCard(null);
+        }
+    }, [isSheetOpen]);
 
     return (
         <div className="grid gap-8">
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CreditCard /> Adicionar Novo Cartão</CardTitle>
-                    <CardDescription>Preencha os detalhes do seu novo cartão de crédito.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AddCardForm onFormSubmit={handleAddSubmit} />
-                </CardContent>
-            </Card>
-
             <Card>
-                <CardHeader>
-                    <CardTitle>Meus Cartões</CardTitle>
-                    <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Meus Cartões</CardTitle>
+                        <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
+                    </div>
+                    <Button onClick={handleAddClick}>
+                        <Plus className="mr-2 h-4 w-4" /> Adicionar Cartão
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <CardsList cards={cards} onEditCard={handleEditClick} />
                 </CardContent>
             </Card>
 
-            <Sheet open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>Editar Cartão</SheetTitle>
+                        <SheetTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</SheetTitle>
                     </SheetHeader>
                     <div className="py-4">
-                        {editingCard && (
-                            <AddCardForm
-                                cardToEdit={editingCard}
-                                onFormSubmit={handleEditSubmit}
-                            />
-                        )}
+                        <AddCardForm
+                            key={editingCard?.id || 'new'}
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleFormSubmit}
+                        />
                     </div>
                 </SheetContent>
             </Sheet>
