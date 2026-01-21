@@ -8,12 +8,13 @@ import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
-    const [view, setView] = useState<'list' | 'form'>('list');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (editingDebt) {
@@ -23,27 +24,22 @@ export default function DebtsPage() {
             await addDebt(values);
             toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
         }
-        setView('list');
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setView('form');
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setView('form');
+        setIsDialogOpen(true);
     };
-
-    const handleCancel = () => {
-        setView('list');
-        setEditingDebt(null);
-    }
     
     return (
-        <div className="grid gap-8">
-            {view === 'list' ? (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="grid gap-8">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -58,20 +54,19 @@ export default function DebtsPage() {
                         <DebtsList debts={debts} onEditDebt={handleEditClick} />
                     </CardContent>
                 </Card>
-            ) : (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <AddDebtForm
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={handleCancel}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+            </div>
+            <DialogContent>
+                 <DialogHeader>
+                    <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
+                </DialogHeader>
+                {isDialogOpen && (
+                    <AddDebtForm
+                        debtToEdit={editingDebt}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }

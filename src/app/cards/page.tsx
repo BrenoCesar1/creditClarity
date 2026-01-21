@@ -8,12 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Card as CardType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
-    const [view, setView] = useState<'list' | 'form'>('list');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
         if (editingCard) {
@@ -23,27 +24,22 @@ export default function CardsPage() {
             await addCard(values);
             toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
         }
-        setView('list');
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setView('form');
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setView('form');
+        setIsDialogOpen(true);
     };
 
-    const handleCancel = () => {
-        setView('list');
-        setEditingCard(null);
-    }
-
     return (
-        <div className="grid gap-8">
-            {view === 'list' ? (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="grid gap-8">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -58,20 +54,19 @@ export default function CardsPage() {
                         <CardsList cards={cards} onEditCard={handleEditClick} />
                     </CardContent>
                 </Card>
-            ) : (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <AddCardForm
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={handleCancel}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+            </div>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                </DialogHeader>
+                {isDialogOpen && (
+                     <AddCardForm
+                        cardToEdit={editingCard}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }

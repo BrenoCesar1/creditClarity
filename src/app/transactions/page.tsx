@@ -14,6 +14,7 @@ import CategoryIcon from "@/components/dashboard/category-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -37,7 +38,7 @@ export default function TransactionsPage() {
     const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [view, setView] = useState<'list' | 'form'>('list');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
@@ -53,24 +54,18 @@ export default function TransactionsPage() {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-        setView('list');
-        setEditingTransaction(null);
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setView('form');
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setView('form');
+        setIsDialogOpen(true);
     };
-
-    const handleCancel = () => {
-        setView('list');
-        setEditingTransaction(null);
-    }
     
     const handleDelete = async (transactionId: string) => {
         await deleteTransaction(transactionId);
@@ -137,8 +132,8 @@ export default function TransactionsPage() {
     };
     
     return (
-        <div className="grid gap-8">
-            {view === 'list' ? (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="grid gap-8">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -236,20 +231,19 @@ export default function TransactionsPage() {
                         </Table>
                     </CardContent>
                 </Card>
-            ) : (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <AddTransactionForm
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={handleCancel}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+            </div>
+             <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                </DialogHeader>
+                {isDialogOpen && (
+                    <AddTransactionForm
+                        transactionToEdit={editingTransaction}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }
