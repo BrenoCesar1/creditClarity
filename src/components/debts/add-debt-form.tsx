@@ -21,10 +21,11 @@ type DebtFormValues = z.infer<typeof debtSchema>;
 
 interface AddDebtFormProps {
     onFormSubmit: (debt: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => Promise<void>;
+    onCancel: () => void;
     debtToEdit?: Debt | null;
 }
 
-export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
+export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormProps) {
   
   const isEditMode = !!debtToEdit;
 
@@ -130,10 +131,15 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
                 )}
             />
         </div>
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditMode ? 'Salvar Alterações' : 'Adicionar Dívida'}
-        </Button>
+        <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditMode ? 'Salvar Alterações' : 'Adicionar Dívida'}
+            </Button>
+        </div>
       </form>
     </Form>
   );

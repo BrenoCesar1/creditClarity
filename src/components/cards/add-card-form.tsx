@@ -22,10 +22,11 @@ type CardFormValues = z.infer<typeof cardSchema>;
 
 interface AddCardFormProps {
     onFormSubmit: (values: CardFormValues) => Promise<void>;
+    onCancel: () => void;
     cardToEdit?: Card | null;
 }
 
-export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
+export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormProps) {
   const isEditMode = !!cardToEdit;
   
   const form = useForm<CardFormValues>({
@@ -123,10 +124,15 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             )}
             />
         </div>
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditMode ? 'Salvar Alterações' : 'Adicionar Cartão'}
-        </Button>
+        <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditMode ? 'Salvar Alterações' : 'Adicionar Cartão'}
+            </Button>
+        </div>
       </form>
     </Form>
   );

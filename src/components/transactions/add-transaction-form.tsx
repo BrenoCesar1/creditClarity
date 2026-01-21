@@ -30,10 +30,11 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 interface AddTransactionFormProps {
     onFormSubmit: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+    onCancel: () => void;
     transactionToEdit?: Transaction | null;
 }
 
-export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTransactionFormProps) {
+export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }: AddTransactionFormProps) {
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -200,10 +201,15 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
         </div>
 
 
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditMode ? 'Salvar Alterações' : 'Adicionar Transação'}
-        </Button>
+        <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditMode ? 'Salvar Alterações' : 'Adicionar Transação'}
+            </Button>
+        </div>
       </form>
     </Form>
   );

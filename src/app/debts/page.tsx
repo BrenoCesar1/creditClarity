@@ -7,15 +7,13 @@ import { Plus } from "lucide-react";
 import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [dialogKey, setDialogKey] = useState(0);
+    const [view, setView] = useState<'list' | 'form'>('list');
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (editingDebt) {
@@ -25,51 +23,55 @@ export default function DebtsPage() {
             await addDebt(values);
             toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
         }
-        setIsDialogOpen(false);
+        setView('list');
     };
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setDialogKey(prev => prev + 1);
-        setIsDialogOpen(true);
+        setView('form');
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setDialogKey(prev => prev + 1);
-        setIsDialogOpen(true);
+        setView('form');
     };
+
+    const handleCancel = () => {
+        setView('list');
+        setEditingDebt(null);
+    }
     
     return (
         <div className="grid gap-8">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Minhas Dívidas a Receber</CardTitle>
-                        <CardDescription>Sua lista de dívidas a receber.</CardDescription>
-                    </div>
-                    <Button onClick={handleAddClick}>
-                        <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <DebtsList debts={debts} onEditDebt={handleEditClick} />
-                </CardContent>
-            </Card>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
-                    <DialogHeader>
-                        <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
+            {view === 'list' ? (
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Minhas Dívidas a Receber</CardTitle>
+                            <CardDescription>Sua lista de dívidas a receber.</CardDescription>
+                        </div>
+                        <Button onClick={handleAddClick}>
+                            <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <DebtsList debts={debts} onEditDebt={handleEditClick} />
+                    </CardContent>
+                </Card>
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                        <AddDebtForm
                             debtToEdit={editingDebt}
                             onFormSubmit={handleFormSubmit}
+                            onCancel={handleCancel}
                         />
-                    </div>
-                </DialogContent>
-            </Dialog>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
