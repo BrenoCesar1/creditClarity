@@ -27,11 +27,11 @@ export default function TransactionsPage() {
         setIsEditingOpen(true);
     };
 
-    const onOpenChange = (open: boolean) => {
+    const handleOpenChange = (open: boolean) => {
+        setIsEditingOpen(open);
         if (!open) {
             setEditingTransaction(null);
         }
-        setIsEditingOpen(open);
     }
 
     return (
@@ -56,15 +56,17 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={onOpenChange}>
+            <Dialog open={isEditingOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Transação</DialogTitle>
                     </DialogHeader>
-                    <AddTransactionForm
-                        transactionToEdit={editingTransaction}
-                        onFormSubmit={handleEditSubmit}
-                    />
+                    {editingTransaction && (
+                        <AddTransactionForm
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleEditSubmit}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
         </div>

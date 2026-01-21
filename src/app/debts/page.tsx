@@ -32,11 +32,11 @@ export default function DebtsPage() {
         setIsEditingOpen(true);
     };
 
-    const onDialogClose = (open: boolean) => {
+    const handleOpenChange = (open: boolean) => {
+        setIsEditingOpen(open);
         if (!open) {
             setEditingDebt(null);
         }
-        setIsEditingOpen(open);
     }
 
     return (
@@ -61,15 +61,17 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={onDialogClose}>
+            <Dialog open={isEditingOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Dívida</DialogTitle>
                     </DialogHeader>
-                    <AddDebtForm
-                        debtToEdit={editingDebt}
-                        onFormSubmit={handleEditSubmit}
-                    />
+                    {editingDebt && (
+                        <AddDebtForm
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleEditSubmit}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
         </div>

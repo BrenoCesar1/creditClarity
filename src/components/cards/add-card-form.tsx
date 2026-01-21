@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import type { Card } from '@/lib/types';
-import { useEffect } from 'react';
 
 const cardSchema = z.object({
   name: z.string().min(2, { message: 'O nome do cartão deve ter pelo menos 2 caracteres.' }),
@@ -31,7 +30,13 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
   
   const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
-    defaultValues: {
+    defaultValues: cardToEdit ? {
+        name: cardToEdit.name,
+        brand: cardToEdit.brand,
+        last4: cardToEdit.last4,
+        expiry: cardToEdit.expiry,
+        dueDate: cardToEdit.dueDate,
+    } : {
       name: '',
       brand: undefined,
       last4: '',
@@ -39,18 +44,6 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
       dueDate: undefined,
     },
   });
-
-  useEffect(() => {
-    if (cardToEdit) {
-        form.reset({
-            name: cardToEdit.name,
-            brand: cardToEdit.brand,
-            last4: cardToEdit.last4,
-            expiry: cardToEdit.expiry,
-            dueDate: cardToEdit.dueDate,
-        });
-    }
-  }, [cardToEdit, form]);
 
   const onSubmit = async (values: CardFormValues) => {
     await onFormSubmit(values);

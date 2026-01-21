@@ -32,11 +32,11 @@ export default function CardsPage() {
         setIsEditingOpen(true);
     };
 
-    const onDialogClose = (open: boolean) => {
+    const handleOpenChange = (open: boolean) => {
+        setIsEditingOpen(open);
         if (!open) {
             setEditingCard(null);
         }
-        setIsEditingOpen(open);
     }
 
     return (
@@ -61,15 +61,17 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={onDialogClose}>
+            <Dialog open={isEditingOpen} onOpenChange={handleOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Cartão</DialogTitle>
                     </DialogHeader>
-                    <AddCardForm
-                        cardToEdit={editingCard}
-                        onFormSubmit={handleEditSubmit}
-                    />
+                    {editingCard && (
+                        <AddCardForm
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleEditSubmit}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
