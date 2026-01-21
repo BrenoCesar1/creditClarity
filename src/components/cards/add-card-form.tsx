@@ -31,6 +31,13 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
   
   const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
+    defaultValues: {
+      name: cardToEdit?.name || '',
+      brand: cardToEdit?.brand,
+      last4: cardToEdit?.last4 || '',
+      expiry: cardToEdit?.expiry || '',
+      dueDate: cardToEdit?.dueDate,
+    }
   });
 
   useEffect(() => {

@@ -31,6 +31,13 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
 
   const form = useForm<DebtFormValues>({
     resolver: zodResolver(debtSchema),
+    defaultValues: {
+      person: debtToEdit?.person || '',
+      amount: debtToEdit?.amount,
+      reason: debtToEdit?.reason || '',
+      installmentsCurrent: debtToEdit?.installments?.current,
+      installmentsTotal: debtToEdit?.installments?.total,
+    }
   });
 
   useEffect(() => {

@@ -40,6 +40,14 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
+    defaultValues: {
+      description: transactionToEdit?.description || '',
+      amount: transactionToEdit?.amount,
+      cardId: transactionToEdit?.cardId,
+      date: transactionToEdit ? new Date(transactionToEdit.date) : new Date(),
+      installmentsCurrent: transactionToEdit?.installments?.current,
+      installmentsTotal: transactionToEdit?.installments?.total,
+    }
   });
 
   useEffect(() => {
