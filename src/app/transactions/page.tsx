@@ -14,7 +14,6 @@ import CategoryIcon from "@/components/dashboard/category-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -37,8 +36,7 @@ function formatDate(dateString: string) {
 export default function TransactionsPage() {
     const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
     const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
@@ -48,26 +46,30 @@ export default function TransactionsPage() {
     }, []);
 
     const handleFormSubmit = async (values: Omit<Transaction, 'id'>) => {
-        if (dialogMode === 'edit' && editingTransaction) {
+        if (editingTransaction) {
             await updateTransaction(editingTransaction.id, values);
             toast({ title: 'Transação atualizada com sucesso!' });
-        } else if (dialogMode === 'add') {
+        } else {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-        setIsDialogOpen(false);
+        setIsFormOpen(false);
+        setEditingTransaction(null);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setDialogMode('edit');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setDialogMode('add');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
+    };
+
+    const handleCancelForm = () => {
+        setIsFormOpen(false);
+        setEditingTransaction(null);
     };
     
     const handleDelete = async (transactionId: string) => {
@@ -76,13 +78,6 @@ export default function TransactionsPage() {
             title: "Transação deletada!",
         });
     };
-    
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setDialogMode(null);
-        }
-    }
 
     const handleCategorize = async () => {
         setIsCategorizing(true);
@@ -142,26 +137,43 @@ export default function TransactionsPage() {
     };
     
     return (
-        <>
+        <div className="space-y-6">
+            {isFormOpen && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AddTransactionForm
+                            key={editingTransaction?.id || 'add'}
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={handleCancelForm}
+                        />
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Histórico de Transações</CardTitle>
                         <CardDescription>Seu histórico completo de transações.</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
-                            {isCategorizing ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <BrainCircuit className="mr-2 h-4 w-4" />
-                            )}
-                            Categorizar com IA
-                        </Button>
-                        <Button onClick={handleAddClick}>
-                            <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
-                        </Button>
-                    </div>
+                    {!isFormOpen && (
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
+                                {isCategorizing ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <BrainCircuit className="mr-2 h-4 w-4" />
+                                )}
+                                Categorizar com IA
+                            </Button>
+                            <Button onClick={handleAddClick}>
+                                <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
+                            </Button>
+                        </div>
+                    )}
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -240,21 +252,6 @@ export default function TransactionsPage() {
                     </Table>
                 </CardContent>
             </Card>
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{dialogMode === 'edit' ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                    </DialogHeader>
-                    {dialogMode && (
-                        <AddTransactionForm
-                            key={editingTransaction?.id || 'add'}
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-        </>
+        </div>
     );
 }

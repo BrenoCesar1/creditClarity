@@ -8,76 +8,73 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Card as CardType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
-        if (dialogMode === 'edit' && editingCard) {
+        if (editingCard) {
             await updateCard(editingCard.id, values);
             toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
-        } else if (dialogMode === 'add') {
+        } else {
             await addCard(values);
             toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
         }
-        setIsDialogOpen(false);
+        setIsFormOpen(false);
+        setEditingCard(null);
     };
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setDialogMode('edit');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setDialogMode('add');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
     };
 
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setDialogMode(null);
-        }
+    const handleCancelForm = () => {
+        setIsFormOpen(false);
+        setEditingCard(null);
     }
 
     return (
-        <>
+        <div className="space-y-6">
+            {isFormOpen && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AddCardForm
+                            key={editingCard?.id || 'add'}
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={handleCancelForm}
+                        />
+                    </CardContent>
+                </Card>
+            )}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Meus Cartões</CardTitle>
                         <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
                     </div>
-                    <Button onClick={handleAddClick}>
-                        <Plus className="mr-2 h-4 w-4" /> Adicionar Cartão
-                    </Button>
+                    {!isFormOpen && (
+                        <Button onClick={handleAddClick}>
+                            <Plus className="mr-2 h-4 w-4" /> Adicionar Cartão
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     <CardsList cards={cards} onEditCard={handleEditClick} />
                 </CardContent>
             </Card>
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{dialogMode === 'edit' ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
-                    </DialogHeader>
-                    {dialogMode && (
-                         <AddCardForm
-                            key={editingCard?.id || 'add'}
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-        </>
+        </div>
     );
 }

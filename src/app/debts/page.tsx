@@ -8,76 +8,74 @@ import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
-        if (dialogMode === 'edit' && editingDebt) {
+        if (editingDebt) {
             await updateDebt(editingDebt.id, values);
             toast({ title: 'Sucesso!', description: 'Dívida atualizada.' });
-        } else if (dialogMode === 'add') {
+        } else {
             await addDebt(values);
             toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
         }
-        setIsDialogOpen(false);
+        setIsFormOpen(false);
+        setEditingDebt(null);
     };
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setDialogMode('edit');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setDialogMode('add');
-        setIsDialogOpen(true);
+        setIsFormOpen(true);
     };
 
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setDialogMode(null);
-        }
+    const handleCancelForm = () => {
+        setIsFormOpen(false);
+        setEditingDebt(null);
     }
     
     return (
-        <>
+        <div className="space-y-6">
+            {isFormOpen && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AddDebtForm
+                            key={editingDebt?.id || 'add'}
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={handleCancelForm}
+                        />
+                    </CardContent>
+                </Card>
+            )}
+
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Minhas Dívidas a Receber</CardTitle>
                         <CardDescription>Sua lista de dívidas a receber.</CardDescription>
                     </div>
-                    <Button onClick={handleAddClick}>
-                        <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
-                    </Button>
+                    {!isFormOpen && (
+                        <Button onClick={handleAddClick}>
+                            <Plus className="mr-2 h-4 w-4" /> Adicionar Dívida
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     <DebtsList debts={debts} onEditDebt={handleEditClick} />
                 </CardContent>
             </Card>
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
-                     <DialogHeader>
-                        <DialogTitle>{dialogMode === 'edit' ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                    </DialogHeader>
-                    {dialogMode && (
-                        <AddDebtForm
-                            key={editingDebt?.id || 'add'}
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-        </>
+        </div>
     );
 }
