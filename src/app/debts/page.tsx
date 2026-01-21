@@ -7,14 +7,14 @@ import { Plus } from "lucide-react";
 import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (editingDebt) {
@@ -24,23 +24,19 @@ export default function DebtsPage() {
             await addDebt(values);
             toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
         }
-        setIsSheetOpen(false);
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
     
-    const handleSheetOpenChange = (open: boolean) => {
-        setIsSheetOpen(open);
-    };
-
     return (
         <div className="grid gap-8">
             <Card>
@@ -58,20 +54,19 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</SheetTitle>
-                    </SheetHeader>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
+                    </DialogHeader>
                     <div className="py-4">
                        <AddDebtForm
-                            key={editingDebt?.id || 'new'}
                             debtToEdit={editingDebt}
                             onFormSubmit={handleFormSubmit}
                         />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

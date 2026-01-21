@@ -7,14 +7,14 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Card as CardType } from "@/lib/types";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
         if (editingCard) {
@@ -24,21 +24,17 @@ export default function CardsPage() {
             await addCard(values);
             toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
         }
-        setIsSheetOpen(false);
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setIsSheetOpen(true);
-    };
-
-    const handleSheetOpenChange = (open: boolean) => {
-        setIsSheetOpen(open);
+        setIsDialogOpen(true);
     };
 
     return (
@@ -58,20 +54,19 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</SheetTitle>
-                    </SheetHeader>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                    </DialogHeader>
                     <div className="py-4">
                         <AddCardForm
-                            key={editingCard?.id || 'new'}
                             cardToEdit={editingCard}
                             onFormSubmit={handleFormSubmit}
                         />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

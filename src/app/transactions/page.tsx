@@ -7,14 +7,14 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export default function TransactionsPage() {
     const { addTransaction, updateTransaction } = useData();
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const handleFormSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (editingTransaction) {
@@ -24,23 +24,19 @@ export default function TransactionsPage() {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-        setIsSheetOpen(false);
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
     
-    const handleSheetOpenChange = (open: boolean) => {
-        setIsSheetOpen(open);
-    };
-
     return (
         <div className="grid gap-8">
              <Card>
@@ -58,20 +54,19 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</SheetTitle>
-                    </SheetHeader>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                    </DialogHeader>
                     <div className="py-4">
                         <AddTransactionForm
-                            key={editingTransaction?.id || 'new'}
                             transactionToEdit={editingTransaction}
                             onFormSubmit={handleFormSubmit}
                         />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
