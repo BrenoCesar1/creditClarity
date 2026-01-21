@@ -35,7 +35,6 @@ interface AddTransactionFormProps {
 }
 
 export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTransactionFormProps) {
-  console.log("Renderização do AddTransactionForm. transactionToEdit:", transactionToEdit);
   const { toast } = useToast();
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
@@ -53,9 +52,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   });
 
   useEffect(() => {
-    console.log("useEffect do AddTransactionForm acionado. transactionToEdit:", transactionToEdit);
     if (transactionToEdit) {
-        console.log("Redefinindo formulário com dados da transação.");
         form.reset({
             description: transactionToEdit.description,
             amount: transactionToEdit.amount,
@@ -64,18 +61,8 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
             installmentsCurrent: transactionToEdit.installments?.current,
             installmentsTotal: transactionToEdit.installments?.total,
         });
-    } else {
-        console.log("Redefinindo formulário para valores padrão.");
-        form.reset({
-            description: '',
-            amount: 0,
-            cardId: undefined,
-            date: new Date(),
-            installmentsCurrent: undefined,
-            installmentsTotal: undefined,
-        });
     }
-  }, [transactionToEdit, form.reset]);
+  }, [transactionToEdit, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
