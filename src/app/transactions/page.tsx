@@ -4,7 +4,7 @@ import { AddTransactionForm } from "@/components/transactions/add-transaction-fo
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { useData } from "@/context/data-context";
 import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -37,11 +37,12 @@ export default function TransactionsPage() {
         setIsSheetOpen(true);
     };
     
-    useEffect(() => {
-        if (!isSheetOpen) {
+    const handleSheetOpenChange = (open: boolean) => {
+        setIsSheetOpen(open);
+        if (!open) {
             setEditingTransaction(null);
         }
-    }, [isSheetOpen]);
+    };
 
     return (
         <div className="grid gap-8">
@@ -60,7 +61,7 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent>
                     <SheetHeader>
                         <SheetTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</SheetTitle>

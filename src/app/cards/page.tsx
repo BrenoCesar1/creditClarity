@@ -5,7 +5,7 @@ import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Card as CardType } from "@/lib/types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -37,11 +37,12 @@ export default function CardsPage() {
         setIsSheetOpen(true);
     };
 
-    useEffect(() => {
-        if (!isSheetOpen) {
+    const handleSheetOpenChange = (open: boolean) => {
+        setIsSheetOpen(open);
+        if (!open) {
             setEditingCard(null);
         }
-    }, [isSheetOpen]);
+    };
 
     return (
         <div className="grid gap-8">
@@ -60,7 +61,7 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent>
                     <SheetHeader>
                         <SheetTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</SheetTitle>

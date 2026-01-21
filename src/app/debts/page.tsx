@@ -6,7 +6,7 @@ import { useData } from "@/context/data-context";
 import { Plus } from "lucide-react";
 import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -37,11 +37,12 @@ export default function DebtsPage() {
         setIsSheetOpen(true);
     };
     
-    useEffect(() => {
-        if (!isSheetOpen) {
+    const handleSheetOpenChange = (open: boolean) => {
+        setIsSheetOpen(open);
+        if (!open) {
             setEditingDebt(null);
         }
-    }, [isSheetOpen]);
+    };
 
     return (
         <div className="grid gap-8">
@@ -60,7 +61,7 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent>
                     <SheetHeader>
                         <SheetTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</SheetTitle>
