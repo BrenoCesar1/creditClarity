@@ -15,8 +15,6 @@ export default function CardsPage() {
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
-    // This effect ensures that when the dialog is closed, the editing state is cleared.
-    // This prevents stale data and potential race conditions.
     useEffect(() => {
         if (!isEditingOpen) {
             setEditingCard(null);
@@ -31,7 +29,7 @@ export default function CardsPage() {
     const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
         if (!editingCard) return;
         await updateCard(editingCard.id, values);
-        setIsEditingOpen(false); // Close the sheet
+        setIsEditingOpen(false);
         toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
     };
 

@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useData } from '@/context/data-context';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -43,28 +43,14 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      description: '',
-      amount: 0,
-      cardId: undefined,
-      date: new Date(),
-      installmentsCurrent: undefined,
-      installmentsTotal: undefined,
+      description: transactionToEdit?.description || '',
+      amount: transactionToEdit?.amount || 0,
+      cardId: transactionToEdit?.cardId || undefined,
+      date: transactionToEdit ? new Date(transactionToEdit.date) : new Date(),
+      installmentsCurrent: transactionToEdit?.installments?.current || undefined,
+      installmentsTotal: transactionToEdit?.installments?.total || undefined,
     },
   });
-
-  useEffect(() => {
-    // Only reset the form if we are in edit mode and have a transaction
-    if (isEditMode && transactionToEdit) {
-      form.reset({
-        description: transactionToEdit.description,
-        amount: transactionToEdit.amount,
-        cardId: transactionToEdit.cardId,
-        date: new Date(transactionToEdit.date),
-        installmentsCurrent: transactionToEdit.installments?.current,
-        installmentsTotal: transactionToEdit.installments?.total,
-      });
-    }
-  }, [isEditMode, transactionToEdit, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
@@ -88,7 +74,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
 
     if (!isEditMode) {
       toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-      form.reset(); // Reset for "add new" form after successful submission
+      form.reset();
     }
   };
 

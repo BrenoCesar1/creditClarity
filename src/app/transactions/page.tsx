@@ -15,8 +15,6 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
-    // This effect ensures that when the dialog is closed, the editing state is cleared.
-    // This prevents stale data and potential race conditions.
     useEffect(() => {
         if (!isEditingOpen) {
             setEditingTransaction(null);
@@ -30,7 +28,7 @@ export default function TransactionsPage() {
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false); // Close the sheet
+        setIsEditingOpen(false);
         toast({ title: 'Transação atualizada com sucesso!' });
     };
 

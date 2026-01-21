@@ -15,14 +15,11 @@ export default function DebtsPage() {
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
-    // This effect ensures that when the dialog is closed, the editing state is cleared.
-    // This prevents stale data and potential race conditions.
     useEffect(() => {
         if (!isEditingOpen) {
             setEditingDebt(null);
         }
     }, [isEditingOpen]);
-
 
     const handleAddSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         await addDebt(values);
@@ -32,7 +29,7 @@ export default function DebtsPage() {
     const handleEditSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (!editingDebt) return;
         await updateDebt(editingDebt.id, values);
-        setIsEditingOpen(false); // Close the sheet
+        setIsEditingOpen(false);
         toast({ title: 'Sucesso!', description: 'Dívida atualizada.' });
     };
 

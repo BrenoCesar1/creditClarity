@@ -8,7 +8,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import type { Debt } from '@/lib/types';
-import { useEffect } from 'react';
 
 const debtSchema = z.object({
   person: z.string().min(2, { message: 'O nome da pessoa deve ter pelo menos 2 caracteres.' }),
@@ -32,25 +31,13 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
   const form = useForm<DebtFormValues>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
-      person: '',
-      amount: undefined,
-      reason: '',
-      installmentsCurrent: undefined,
-      installmentsTotal: undefined,
+      person: debtToEdit?.person || '',
+      amount: debtToEdit?.amount || undefined,
+      reason: debtToEdit?.reason || '',
+      installmentsCurrent: debtToEdit?.installments?.current || undefined,
+      installmentsTotal: debtToEdit?.installments?.total || undefined,
     },
   });
-
-  useEffect(() => {
-    if (isEditMode && debtToEdit) {
-      form.reset({
-        person: debtToEdit.person,
-        amount: debtToEdit.amount,
-        reason: debtToEdit.reason,
-        installmentsCurrent: debtToEdit.installments?.current,
-        installmentsTotal: debtToEdit.installments?.total,
-      });
-    }
-  }, [isEditMode, debtToEdit, form]);
 
   const onSubmit = async (values: DebtFormValues) => {
     const debtData: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'> = {
