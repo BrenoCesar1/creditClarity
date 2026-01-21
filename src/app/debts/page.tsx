@@ -15,6 +15,7 @@ export default function DebtsPage() {
     const { toast } = useToast();
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogKey, setDialogKey] = useState(0);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (editingDebt) {
@@ -29,20 +30,15 @@ export default function DebtsPage() {
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setEditingDebt(null);
-        }
-    }
     
     return (
         <div className="grid gap-8">
@@ -61,18 +57,16 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent key={dialogKey}>
                     <DialogHeader>
                         <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                       {isDialogOpen && (
-                           <AddDebtForm
-                                debtToEdit={editingDebt}
-                                onFormSubmit={handleFormSubmit}
-                            />
-                        )}
+                       <AddDebtForm
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleFormSubmit}
+                        />
                     </div>
                 </DialogContent>
             </Dialog>

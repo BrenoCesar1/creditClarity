@@ -15,6 +15,7 @@ export default function TransactionsPage() {
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogKey, setDialogKey] = useState(0);
 
     const handleFormSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (editingTransaction) {
@@ -29,20 +30,15 @@ export default function TransactionsPage() {
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setEditingTransaction(null);
-        }
-    }
     
     return (
         <div className="grid gap-8">
@@ -61,18 +57,16 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent key={dialogKey}>
                     <DialogHeader>
                         <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        {isDialogOpen && (
-                            <AddTransactionForm
-                                transactionToEdit={editingTransaction}
-                                onFormSubmit={handleFormSubmit}
-                            />
-                        )}
+                        <AddTransactionForm
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                        />
                     </div>
                 </DialogContent>
             </Dialog>

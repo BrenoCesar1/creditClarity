@@ -15,6 +15,7 @@ export default function CardsPage() {
     const { toast } = useToast();
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogKey, setDialogKey] = useState(0);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
         if (editingCard) {
@@ -29,20 +30,15 @@ export default function CardsPage() {
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
-
-    const handleOpenChange = (open: boolean) => {
-        setIsDialogOpen(open);
-        if (!open) {
-            setEditingCard(null);
-        }
-    }
 
     return (
         <div className="grid gap-8">
@@ -61,18 +57,16 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-                <DialogContent>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent key={dialogKey}>
                     <DialogHeader>
                         <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        {isDialogOpen && (
-                            <AddCardForm
-                                cardToEdit={editingCard}
-                                onFormSubmit={handleFormSubmit}
-                            />
-                        )}
+                        <AddCardForm
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleFormSubmit}
+                        />
                     </div>
                 </DialogContent>
             </Dialog>
