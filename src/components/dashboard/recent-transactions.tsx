@@ -40,7 +40,7 @@ function formatDate(dateString: string) {
     });
 }
 
-export function RecentTransactions({ onEditTransaction }: { onEditTransaction: (transaction: Transaction) => void }) {
+export function RecentTransactions({ onEditTransaction }: { onEditTransaction?: (transaction: Transaction) => void }) {
   const { transactions, updateTransaction, deleteTransaction } = useData();
   const [isCategorizing, setIsCategorizing] = useState(false);
   const { toast } = useToast();
@@ -173,10 +173,12 @@ export function RecentTransactions({ onEditTransaction }: { onEditTransaction: (
                           </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => onEditTransaction(transaction)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Editar
-                          </DropdownMenuItem>
+                          {onEditTransaction && (
+                            <DropdownMenuItem onSelect={() => onEditTransaction(transaction)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar
+                            </DropdownMenuItem>
+                          )}
                           <AlertDialog>
                               <AlertDialogTrigger asChild>
                                   <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
