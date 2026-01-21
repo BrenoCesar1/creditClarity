@@ -41,7 +41,7 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
   });
 
   useEffect(() => {
-    if (isEditMode) {
+    if (debtToEdit) {
         form.reset({
             person: debtToEdit.person,
             amount: debtToEdit.amount,
@@ -49,16 +49,8 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
             installmentsCurrent: debtToEdit.installments?.current,
             installmentsTotal: debtToEdit.installments?.total,
         });
-    } else {
-        form.reset({
-            person: '',
-            amount: undefined,
-            reason: '',
-            installmentsCurrent: undefined,
-            installmentsTotal: undefined
-        });
     }
-  }, [debtToEdit, isEditMode, form]);
+  }, [debtToEdit, form]);
 
   const onSubmit = async (values: DebtFormValues) => {
     const debtData: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'> = {

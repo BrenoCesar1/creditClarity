@@ -52,7 +52,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   });
 
   useEffect(() => {
-    if (isEditMode && transactionToEdit) {
+    if (transactionToEdit) {
         form.reset({
             description: transactionToEdit.description,
             amount: transactionToEdit.amount,
@@ -61,17 +61,8 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
             installmentsCurrent: transactionToEdit.installments?.current,
             installmentsTotal: transactionToEdit.installments?.total,
         });
-    } else {
-        form.reset({
-            description: '',
-            amount: undefined,
-            cardId: undefined,
-            date: new Date(),
-            installmentsCurrent: undefined,
-            installmentsTotal: undefined,
-        });
     }
-  }, [transactionToEdit, isEditMode, form]);
+  }, [transactionToEdit, form]);
 
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
@@ -95,14 +86,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
 
     if (!isEditMode) {
       toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
-      form.reset({
-          description: '',
-          amount: undefined,
-          cardId: undefined,
-          date: new Date(),
-          installmentsCurrent: undefined,
-          installmentsTotal: undefined,
-      });
+      form.reset();
     }
   };
 

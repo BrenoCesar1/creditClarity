@@ -41,7 +41,7 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
   });
 
   useEffect(() => {
-    if (isEditMode && cardToEdit) {
+    if (cardToEdit) {
         form.reset({
             name: cardToEdit.name,
             brand: cardToEdit.brand,
@@ -49,16 +49,8 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
             expiry: cardToEdit.expiry,
             dueDate: cardToEdit.dueDate,
         });
-    } else {
-        form.reset({
-            name: '',
-            brand: undefined,
-            last4: '',
-            expiry: '',
-            dueDate: undefined,
-        });
     }
-  }, [cardToEdit, isEditMode, form]);
+  }, [cardToEdit, form]);
 
   const onSubmit = async (values: CardFormValues) => {
     await onFormSubmit(values);
