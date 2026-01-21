@@ -13,9 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
-    const [editingCard, setEditingCard] = useState<CardType | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [editingCard, setEditingCard] = useState<CardType | null>(null);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
         if (dialogMode === 'edit' && editingCard) {
@@ -70,6 +70,7 @@ export default function CardsPage() {
                     </DialogHeader>
                     {dialogMode && (
                          <AddCardForm
+                            key={editingCard?.id || 'add'}
                             cardToEdit={editingCard}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}

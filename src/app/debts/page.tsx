@@ -13,9 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
-    const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (dialogMode === 'edit' && editingDebt) {
@@ -70,6 +70,7 @@ export default function DebtsPage() {
                     </DialogHeader>
                     {dialogMode && (
                         <AddDebtForm
+                            key={editingDebt?.id || 'add'}
                             debtToEdit={editingDebt}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}

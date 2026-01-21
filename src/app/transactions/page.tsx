@@ -37,9 +37,9 @@ function formatDate(dateString: string) {
 export default function TransactionsPage() {
     const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
     const { toast } = useToast();
-    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogMode, setDialogMode] = useState<'add' | 'edit' | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
@@ -247,6 +247,7 @@ export default function TransactionsPage() {
                     </DialogHeader>
                     {dialogMode && (
                         <AddTransactionForm
+                            key={editingTransaction?.id || 'add'}
                             transactionToEdit={editingTransaction}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}

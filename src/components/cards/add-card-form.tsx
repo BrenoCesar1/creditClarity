@@ -33,7 +33,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
     resolver: zodResolver(cardSchema),
     defaultValues: {
       name: cardToEdit?.name || '',
-      brand: cardToEdit?.brand,
+      brand: cardToEdit?.brand || undefined,
       last4: cardToEdit?.last4 || '',
       expiry: cardToEdit?.expiry || '',
       dueDate: cardToEdit?.dueDate || undefined,
