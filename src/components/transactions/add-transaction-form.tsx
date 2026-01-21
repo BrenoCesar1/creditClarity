@@ -45,11 +45,11 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   useEffect(() => {
     form.reset({
       description: transactionToEdit?.description || '',
-      amount: transactionToEdit?.amount || undefined,
-      cardId: transactionToEdit?.cardId || undefined,
+      amount: transactionToEdit?.amount,
+      cardId: transactionToEdit?.cardId,
       date: transactionToEdit ? new Date(transactionToEdit.date) : new Date(),
-      installmentsCurrent: transactionToEdit?.installments?.current || undefined,
-      installmentsTotal: transactionToEdit?.installments?.total || undefined,
+      installmentsCurrent: transactionToEdit?.installments?.current,
+      installmentsTotal: transactionToEdit?.installments?.total,
     });
   }, [transactionToEdit, form]);
 

@@ -36,10 +36,10 @@ export function AddDebtForm({ onFormSubmit, debtToEdit }: AddDebtFormProps) {
   useEffect(() => {
     form.reset({
       person: debtToEdit?.person || '',
-      amount: debtToEdit?.amount || undefined,
+      amount: debtToEdit?.amount,
       reason: debtToEdit?.reason || '',
-      installmentsCurrent: debtToEdit?.installments?.current || undefined,
-      installmentsTotal: debtToEdit?.installments?.total || undefined,
+      installmentsCurrent: debtToEdit?.installments?.current,
+      installmentsTotal: debtToEdit?.installments?.total,
     });
   }, [debtToEdit, form]);
 

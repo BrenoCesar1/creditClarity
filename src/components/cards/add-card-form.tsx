@@ -36,10 +36,10 @@ export function AddCardForm({ onFormSubmit, cardToEdit }: AddCardFormProps) {
   useEffect(() => {
     form.reset({
       name: cardToEdit?.name || '',
-      brand: cardToEdit?.brand || undefined,
+      brand: cardToEdit?.brand,
       last4: cardToEdit?.last4 || '',
       expiry: cardToEdit?.expiry || '',
-      dueDate: cardToEdit?.dueDate || undefined,
+      dueDate: cardToEdit?.dueDate,
     });
   }, [cardToEdit, form]);
 
