@@ -15,6 +15,10 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditingOpen, setIsEditingOpen] = useState(false);
 
+    const handleAddSubmit = async (values: Omit<Transaction, 'id'>) => {
+        await addTransaction(values);
+    };
+
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
@@ -42,7 +46,7 @@ export default function TransactionsPage() {
                     <CardDescription>Registre uma nova transação em um de seus cartões.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AddTransactionForm onFormSubmit={addTransaction} />
+                    <AddTransactionForm onFormSubmit={handleAddSubmit} />
                 </CardContent>
             </Card>
 

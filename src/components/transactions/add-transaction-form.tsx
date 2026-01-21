@@ -16,6 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useData } from '@/context/data-context';
+import { useEffect, useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -37,17 +38,11 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
   const { toast } = useToast();
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: transactionToEdit ? {
-        description: transactionToEdit.description,
-        amount: transactionToEdit.amount,
-        cardId: transactionToEdit.cardId,
-        date: new Date(transactionToEdit.date),
-        installmentsCurrent: transactionToEdit.installments?.current,
-        installmentsTotal: transactionToEdit.installments?.total,
-    } : {
+    defaultValues: {
       description: '',
       amount: 0,
       cardId: undefined,
@@ -57,13 +52,35 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
     },
   });
 
+  useEffect(() => {
+    if (transactionToEdit) {
+      form.reset({
+        description: transactionToEdit.description,
+        amount: transactionToEdit.amount,
+        cardId: transactionToEdit.cardId,
+        date: new Date(transactionToEdit.date),
+        installmentsCurrent: transactionToEdit.installments?.current,
+        installmentsTotal: transactionToEdit.installments?.total,
+      });
+    } else {
+        form.reset({
+            description: '',
+            amount: 0,
+            cardId: undefined,
+            date: new Date(),
+            installmentsCurrent: undefined,
+            installmentsTotal: undefined,
+        });
+    }
+  }, [transactionToEdit, form]);
+
   const onSubmit = async (values: TransactionFormValues) => {
     const transactionData: Omit<Transaction, 'id'> = {
         description: values.description,
         amount: values.amount,
         cardId: values.cardId,
         date: values.date.toISOString(),
-        category: transactionToEdit?.category,
+        category: isEditMode ? transactionToEdit.category : undefined,
     };
 
     if (values.installmentsCurrent && values.installmentsTotal && values.installmentsTotal > 0) {
@@ -142,7 +159,7 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Data da Transação</FormLabel>
-                  <Popover>
+                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -165,7 +182,10 @@ export function AddTransactionForm({ onFormSubmit, transactionToEdit }: AddTrans
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                            field.onChange(date);
+                            setIsCalendarOpen(false);
+                        }}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
