@@ -13,18 +13,16 @@ export default function TransactionsPage() {
     const { addTransaction, updateTransaction } = useData();
     const { toast } = useToast();
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-    const [isEditingOpen, setIsEditingOpen] = useState(false);
 
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false);
+        setEditingTransaction(null);
         toast({ title: 'Transação atualizada com sucesso!' });
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setIsEditingOpen(true);
     };
 
     return (
@@ -49,7 +47,7 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+            <Dialog open={!!editingTransaction} onOpenChange={(isOpen) => !isOpen && setEditingTransaction(null)}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Transação</DialogTitle>
