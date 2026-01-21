@@ -7,7 +7,7 @@ import { ArrowLeftRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function TransactionsPage() {
     const { addTransaction, updateTransaction } = useData();
@@ -30,7 +30,7 @@ export default function TransactionsPage() {
     const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
         if (!editingTransaction) return;
         await updateTransaction(editingTransaction.id, values);
-        setIsEditingOpen(false); // Close the dialog
+        setIsEditingOpen(false); // Close the sheet
         toast({ title: 'Transação atualizada com sucesso!' });
     };
 
@@ -61,20 +61,21 @@ export default function TransactionsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Transação</DialogTitle>
-                    </DialogHeader>
-                    {/* The form is only rendered when there's a transaction to edit, ensuring a clean state. */}
-                    {editingTransaction && (
-                        <AddTransactionForm
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleEditSubmit}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+            <Sheet open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Editar Transação</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4">
+                        {editingTransaction && (
+                            <AddTransactionForm
+                                transactionToEdit={editingTransaction}
+                                onFormSubmit={handleEditSubmit}
+                            />
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

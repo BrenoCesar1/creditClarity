@@ -7,7 +7,7 @@ import { Users } from "lucide-react";
 import type { Debt } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
@@ -32,7 +32,7 @@ export default function DebtsPage() {
     const handleEditSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         if (!editingDebt) return;
         await updateDebt(editingDebt.id, values);
-        setIsEditingOpen(false); // Close the dialog
+        setIsEditingOpen(false); // Close the sheet
         toast({ title: 'Sucesso!', description: 'Dívida atualizada.' });
     };
 
@@ -63,20 +63,21 @@ export default function DebtsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Dívida</DialogTitle>
-                    </DialogHeader>
-                    {/* The form is only rendered when there's a debt to edit, ensuring a clean state. */}
-                    {editingDebt && (
-                        <AddDebtForm
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleEditSubmit}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+            <Sheet open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Editar Dívida</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4">
+                        {editingDebt && (
+                            <AddDebtForm
+                                debtToEdit={editingDebt}
+                                onFormSubmit={handleEditSubmit}
+                            />
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

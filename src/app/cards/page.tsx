@@ -7,7 +7,7 @@ import { CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { Card as CardType } from "@/lib/types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
@@ -31,7 +31,7 @@ export default function CardsPage() {
     const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
         if (!editingCard) return;
         await updateCard(editingCard.id, values);
-        setIsEditingOpen(false); // Close the dialog
+        setIsEditingOpen(false); // Close the sheet
         toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
     };
 
@@ -62,20 +62,21 @@ export default function CardsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Cartão</DialogTitle>
-                    </DialogHeader>
-                    {/* The form is only rendered when there's a card to edit, ensuring a clean state. */}
-                    {editingCard && (
-                        <AddCardForm
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleEditSubmit}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+            <Sheet open={isEditingOpen} onOpenChange={setIsEditingOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Editar Cartão</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4">
+                        {editingCard && (
+                            <AddCardForm
+                                cardToEdit={editingCard}
+                                onFormSubmit={handleEditSubmit}
+                            />
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
