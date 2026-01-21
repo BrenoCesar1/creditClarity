@@ -13,6 +13,7 @@ export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
+    const [isEditingOpen, setIsEditingOpen] = useState(false);
 
     const handleAddSubmit = async (values: Omit<CardType, 'id'>) => {
         await addCard(values);
@@ -22,8 +23,13 @@ export default function CardsPage() {
     const handleEditSubmit = async (values: Omit<CardType, 'id'>) => {
         if (!editingCard) return;
         await updateCard(editingCard.id, values);
-        setEditingCard(null);
+        setIsEditingOpen(false);
         toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
+    };
+
+    const handleEditClick = (card: CardType) => {
+        setEditingCard(card);
+        setIsEditingOpen(true);
     };
 
     return (
@@ -44,11 +50,11 @@ export default function CardsPage() {
                     <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <CardsList cards={cards} onEditCard={setEditingCard} />
+                    <CardsList cards={cards} onEditCard={handleEditClick} />
                 </CardContent>
             </Card>
 
-            <Dialog open={!!editingCard} onOpenChange={(open) => {if (!open) setEditingCard(null)}}>
+            <Dialog open={isEditingOpen} onOpenChange={setIsEditingOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Editar Cartão</DialogTitle>

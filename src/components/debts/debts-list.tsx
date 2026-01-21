@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import type { Debt } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,8 +9,6 @@ import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AddDebtForm } from './add-debt-form';
 
 function formatCurrency(amount: number) {
     return new Intl.NumberFormat('pt-BR', {
@@ -20,10 +17,9 @@ function formatCurrency(amount: number) {
     }).format(amount);
 }
 
-export function DebtsList({ debts }: { debts: Debt[] }) {
+export function DebtsList({ debts, onEditDebt }: { debts: Debt[], onEditDebt: (debt: Debt) => void }) {
     const { updateDebt, deleteDebt } = useData();
     const { toast } = useToast();
-    const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
     const handlePaidChange = (debtId: string, paid: boolean) => {
         updateDebt(debtId, { paid });
@@ -38,13 +34,6 @@ export function DebtsList({ debts }: { debts: Debt[] }) {
             title: "Dívida deletada!",
         });
     }
-
-    const handleEditSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
-        if (!editingDebt) return;
-        await updateDebt(editingDebt.id, values);
-        setEditingDebt(null);
-        toast({ title: 'Dívida atualizada com sucesso!' });
-    };
 
     if (debts.length === 0) {
         return <p className="text-muted-foreground text-center">Nenhuma dívida a receber cadastrada.</p>
@@ -95,7 +84,7 @@ export function DebtsList({ debts }: { debts: Debt[] }) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setEditingDebt(debt)}>
+                        <DropdownMenuItem onSelect={() => onEditDebt(debt)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar
                         </DropdownMenuItem>
@@ -124,17 +113,6 @@ export function DebtsList({ debts }: { debts: Debt[] }) {
               </div>
             </div>
           ))}
-            <Dialog open={!!editingDebt} onOpenChange={(open) => {if (!open) setEditingDebt(null)}}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Dívida</DialogTitle>
-                    </DialogHeader>
-                    <AddDebtForm
-                        debtToEdit={editingDebt}
-                        onFormSubmit={handleEditSubmit}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

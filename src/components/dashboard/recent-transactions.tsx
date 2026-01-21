@@ -21,8 +21,6 @@ import { Skeleton } from '../ui/skeleton';
 import { useData } from '@/context/data-context';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AddTransactionForm } from '../transactions/add-transaction-form';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -42,12 +40,11 @@ function formatDate(dateString: string) {
     });
 }
 
-export function RecentTransactions() {
+export function RecentTransactions({ onEditTransaction }: { onEditTransaction: (transaction: Transaction) => void }) {
   const { transactions, updateTransaction, deleteTransaction } = useData();
   const [isCategorizing, setIsCategorizing] = useState(false);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -108,13 +105,6 @@ export function RecentTransactions() {
     } finally {
       setIsCategorizing(false);
     }
-  };
-
-  const handleEditSubmit = async (values: Omit<Transaction, 'id'>) => {
-    if (!editingTransaction) return;
-    await updateTransaction(editingTransaction.id, values);
-    setEditingTransaction(null);
-    toast({ title: 'Transação atualizada com sucesso!' });
   };
 
   const handleDelete = async (transactionId: string) => {
@@ -183,7 +173,7 @@ export function RecentTransactions() {
                           </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => setEditingTransaction(transaction)}>
+                          <DropdownMenuItem onSelect={() => onEditTransaction(transaction)}>
                               <Pencil className="mr-2 h-4 w-4" />
                               Editar
                           </DropdownMenuItem>
@@ -215,17 +205,6 @@ export function RecentTransactions() {
           </TableBody>
         </Table>
       </CardContent>
-       <Dialog open={!!editingTransaction} onOpenChange={(open) => {if (!open) setEditingTransaction(null)}}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Editar Transação</DialogTitle>
-                </DialogHeader>
-                <AddTransactionForm
-                    transactionToEdit={editingTransaction}
-                    onFormSubmit={handleEditSubmit}
-                />
-            </DialogContent>
-        </Dialog>
     </Card>
   );
 }
