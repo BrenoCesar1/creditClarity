@@ -15,7 +15,6 @@ export default function CardsPage() {
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
-    const [dialogKey, setDialogKey] = useState(0);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
         try {
@@ -34,13 +33,11 @@ export default function CardsPage() {
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setDialogKey(k => k + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setDialogKey(k => k + 1);
         setIsDialogOpen(true);
     };
 
@@ -63,18 +60,19 @@ export default function CardsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
-                        <DialogDescription />
+                        <DialogDescription>
+                            {editingCard ? 'Edite as informações do seu cartão.' : 'Preencha as informações do novo cartão.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    {isDialogOpen && (
-                        <AddCardForm
-                            cardToEdit={editingCard}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
+                    <AddCardForm
+                        key={editingCard?.id || 'add'}
+                        cardToEdit={editingCard}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
                 </DialogContent>
             </Dialog>
         </>

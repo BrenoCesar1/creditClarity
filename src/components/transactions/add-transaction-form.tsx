@@ -15,7 +15,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useData } from '@/context/data-context';
-import { useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -37,7 +36,6 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }: AddTransactionFormProps) {
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -109,7 +107,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Cartão</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
+                    <Select modal={false} onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
@@ -131,7 +129,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Data da Transação</FormLabel>
-                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <Popover modal={false}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -154,10 +152,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={(date) => {
-                            if(date) field.onChange(date);
-                            setIsCalendarOpen(false);
-                        }}
+                        onSelect={field.onChange}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }

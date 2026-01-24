@@ -41,7 +41,6 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
-    const [dialogKey, setDialogKey] = useState(0);
 
     useEffect(() => {
       setIsClient(true);
@@ -60,13 +59,11 @@ export default function TransactionsPage() {
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
     
@@ -236,18 +233,19 @@ export default function TransactionsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                        <DialogDescription />
+                        <DialogDescription>
+                            {editingTransaction ? 'Edite as informações da sua transação.' : 'Preencha as informações da nova transação.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    {isDialogOpen && (
-                        <AddTransactionForm
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
+                    <AddTransactionForm
+                        key={editingTransaction?.id || 'add'}
+                        transactionToEdit={editingTransaction}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
                 </DialogContent>
             </Dialog>
         </>

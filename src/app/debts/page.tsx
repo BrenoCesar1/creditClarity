@@ -15,7 +15,6 @@ export default function DebtsPage() {
     const { toast } = useToast();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
-    const [dialogKey, setDialogKey] = useState(0);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
         try {
@@ -34,13 +33,11 @@ export default function DebtsPage() {
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setDialogKey(k => k + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setDialogKey(k => k + 1);
         setIsDialogOpen(true);
     };
     
@@ -64,18 +61,19 @@ export default function DebtsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                        <DialogDescription />
+                        <DialogDescription>
+                            {editingDebt ? 'Edite as informações da dívida.' : 'Preencha as informações da nova dívida.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    {isDialogOpen && (
-                        <AddDebtForm
-                            debtToEdit={editingDebt}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
+                    <AddDebtForm
+                        key={editingDebt?.id || 'add'}
+                        debtToEdit={editingDebt}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
                 </DialogContent>
             </Dialog>
         </>
