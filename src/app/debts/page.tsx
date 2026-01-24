@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AddDebtForm } from "@/components/debts/add-debt-form";
 import { DebtsList } from "@/components/debts/debts-list";
 import { useData } from "@/context/data-context";
@@ -64,16 +64,19 @@ export default function DebtsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
-                    <DialogHeader>
-                        <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                    </DialogHeader>
-                    <AddDebtForm
-                        debtToEdit={editingDebt}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                </DialogContent>
+                {isDialogOpen && (
+                    <DialogContent key={dialogKey}>
+                        <DialogHeader>
+                            <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
+                            <DialogDescription />
+                        </DialogHeader>
+                        <AddDebtForm
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
+                    </DialogContent>
+                )}
             </Dialog>
         </>
     );

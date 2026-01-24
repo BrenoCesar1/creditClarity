@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AddCardForm } from "@/components/cards/add-card-form";
 import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
@@ -63,16 +63,19 @@ export default function CardsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
-                    <DialogHeader>
-                        <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
-                    </DialogHeader>
-                    <AddCardForm
-                        cardToEdit={editingCard}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                </DialogContent>
+                {isDialogOpen && (
+                    <DialogContent key={dialogKey}>
+                        <DialogHeader>
+                            <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                            <DialogDescription />
+                        </DialogHeader>
+                        <AddCardForm
+                            cardToEdit={editingCard}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
+                    </DialogContent>
+                )}
             </Dialog>
         </>
     );

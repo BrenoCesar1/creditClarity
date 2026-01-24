@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AddTransactionForm } from "@/components/transactions/add-transaction-form";
 import { useData } from "@/context/data-context";
 import { Plus, BrainCircuit, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import CategoryIcon from "@/components/dashboard/category-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription as AlertDialogDescriptionComponent, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -215,9 +215,9 @@ export default function TransactionsPage() {
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
+                                                        <AlertDialogDescriptionComponent>
                                                             Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
-                                                        </AlertDialogDescription>
+                                                        </AlertDialogDescriptionComponent>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -236,16 +236,19 @@ export default function TransactionsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent key={dialogKey}>
-                    <DialogHeader>
-                        <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                    </DialogHeader>
-                    <AddTransactionForm
-                        transactionToEdit={editingTransaction}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                </DialogContent>
+                {isDialogOpen && (
+                    <DialogContent key={dialogKey}>
+                        <DialogHeader>
+                            <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                            <DialogDescription />
+                        </DialogHeader>
+                        <AddTransactionForm
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
+                    </DialogContent>
+                )}
             </Dialog>
         </>
     );
