@@ -14,6 +14,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useData } from '@/context/data-context';
 
 const transactionSchema = z.object({
@@ -73,7 +74,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-6 gap-x-4 gap-y-6">
+        <div className="grid grid-cols-6 items-end gap-x-4 gap-y-6">
             <FormField
                 control={form.control}
                 name="description"
@@ -127,7 +128,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
+                <FormItem className="col-span-6 sm:col-span-2">
                   <FormLabel>Data da Transação</FormLabel>
                   <Popover modal={false}>
                     <PopoverTrigger asChild>
@@ -140,7 +141,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP", { })
+                            format(field.value, "PPP", { locale: ptBR })
                           ) : (
                             <span>Escolha uma data</span>
                           )}
