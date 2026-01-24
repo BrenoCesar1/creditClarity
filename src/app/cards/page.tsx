@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AddCardForm } from "@/components/cards/add-card-form";
 import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
@@ -25,7 +25,7 @@ export default function CardsPage() {
                 await addCard(values);
                 toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
             }
-            setIsSheetOpen(false);
+            setIsDialogOpen(false);
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro!', description: 'Não foi possível salvar o cartão.' });
         }
@@ -33,12 +33,12 @@ export default function CardsPage() {
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setIsSheetOpen(true);
+        setIsDialogOpen(true);
     };
 
     return (
@@ -59,24 +59,24 @@ export default function CardsPage() {
                     </CardContent>
                 </Card>
             </div>
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</SheetTitle>
-                        <SheetDescription>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                        <DialogDescription>
                             {editingCard ? 'Edite as informações do seu cartão.' : 'Preencha as informações do novo cartão.'}
-                        </SheetDescription>
-                    </SheetHeader>
+                        </DialogDescription>
+                    </DialogHeader>
                     <div className="py-4">
                         <AddCardForm
                             key={editingCard?.id || 'add'}
                             cardToEdit={editingCard}
                             onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsSheetOpen(false)}
+                            onCancel={() => setIsDialogOpen(false)}
                         />
                     </div>
-                </SheetContent>
-            </Sheet>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
