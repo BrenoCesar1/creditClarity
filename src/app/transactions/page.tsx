@@ -236,12 +236,11 @@ export default function TransactionsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
+                <DialogContent key={dialogKey}>
                     <DialogHeader>
                         <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
                     </DialogHeader>
                     <AddTransactionForm
-                        key={dialogKey}
                         transactionToEdit={editingTransaction}
                         onFormSubmit={handleFormSubmit}
                         onCancel={() => setIsDialogOpen(false)}
