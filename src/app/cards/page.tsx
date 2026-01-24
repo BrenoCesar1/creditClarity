@@ -1,5 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AddCardForm } from "@/components/cards/add-card-form";
 import { CardsList } from "@/components/cards/cards-list";
 import { useData } from "@/context/data-context";
@@ -12,69 +13,67 @@ import { Button } from "@/components/ui/button";
 export default function CardsPage() {
     const { cards, addCard, updateCard } = useData();
     const { toast } = useToast();
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<CardType | null>(null);
 
     const handleFormSubmit = async (values: Omit<CardType, 'id'>) => {
-        if (editingCard) {
-            await updateCard(editingCard.id, values);
-            toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
-        } else {
-            await addCard(values);
-            toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
+        try {
+            if (editingCard) {
+                await updateCard(editingCard.id, values);
+                toast({ title: 'Sucesso!', description: 'Cartão atualizado.' });
+            } else {
+                await addCard(values);
+                toast({ title: 'Sucesso!', description: 'Cartão adicionado.' });
+            }
+            setIsDialogOpen(false);
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Erro!', description: 'Não foi possível salvar o cartão.' });
         }
-        setIsFormOpen(false);
-        setEditingCard(null);
     };
 
     const handleEditClick = (card: CardType) => {
         setEditingCard(card);
-        setIsFormOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingCard(null);
-        setIsFormOpen(true);
+        setIsDialogOpen(true);
     };
 
-    const handleCancelForm = () => {
-        setIsFormOpen(false);
-        setEditingCard(null);
-    }
-
     return (
-        <div className="space-y-6">
-            {isFormOpen && (
+        <>
+            <div className="space-y-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Meus Cartões</CardTitle>
+                            <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
+                        </div>
+                        <Button onClick={handleAddClick}>
+                            <Plus className="mr-2 h-4 w-4" /> Adicionar Cartão
+                        </Button>
                     </CardHeader>
                     <CardContent>
+                        <CardsList cards={cards} onEditCard={handleEditClick} />
+                    </CardContent>
+                </Card>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                    </DialogHeader>
+                    {isDialogOpen && (
                         <AddCardForm
                             key={editingCard?.id || 'add'}
                             cardToEdit={editingCard}
                             onFormSubmit={handleFormSubmit}
-                            onCancel={handleCancelForm}
+                            onCancel={() => setIsDialogOpen(false)}
                         />
-                    </CardContent>
-                </Card>
-            )}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Meus Cartões</CardTitle>
-                        <CardDescription>Sua lista de cartões cadastrados.</CardDescription>
-                    </div>
-                    {!isFormOpen && (
-                        <Button onClick={handleAddClick}>
-                            <Plus className="mr-2 h-4 w-4" /> Adicionar Cartão
-                        </Button>
                     )}
-                </CardHeader>
-                <CardContent>
-                    <CardsList cards={cards} onEditCard={handleEditClick} />
-                </CardContent>
-            </Card>
-        </div>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

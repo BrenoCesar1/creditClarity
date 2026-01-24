@@ -1,5 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AddTransactionForm } from "@/components/transactions/add-transaction-form";
 import { useData } from "@/context/data-context";
 import { Plus, BrainCircuit, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -36,7 +37,7 @@ function formatDate(dateString: string) {
 export default function TransactionsPage() {
     const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
     const { toast } = useToast();
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
@@ -53,23 +54,17 @@ export default function TransactionsPage() {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-        setIsFormOpen(false);
-        setEditingTransaction(null);
+        setIsDialogOpen(false);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setIsFormOpen(true);
+        setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setIsFormOpen(true);
-    };
-
-    const handleCancelForm = () => {
-        setIsFormOpen(false);
-        setEditingTransaction(null);
+        setIsDialogOpen(true);
     };
     
     const handleDelete = async (transactionId: string) => {
@@ -137,29 +132,14 @@ export default function TransactionsPage() {
     };
     
     return (
-        <div className="space-y-6">
-            {isFormOpen && (
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <AddTransactionForm
-                            key={editingTransaction?.id || 'add'}
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={handleCancelForm}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Histórico de Transações</CardTitle>
-                        <CardDescription>Seu histórico completo de transações.</CardDescription>
-                    </div>
-                    {!isFormOpen && (
+        <>
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Histórico de Transações</CardTitle>
+                            <CardDescription>Seu histórico completo de transações.</CardDescription>
+                        </div>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
                                 {isCategorizing ? (
@@ -173,85 +153,100 @@ export default function TransactionsPage() {
                                 <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
                             </Button>
                         </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead>Descrição</TableHead>
+                                <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                                <TableHead className="hidden md:table-cell">Data</TableHead>
+                                <TableHead className="text-right">Valor</TableHead>
+                                <TableHead className="w-[50px] text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((transaction) => (
+                                <TableRow key={transaction.id}>
+                                    <TableCell>
+                                    <div className="font-medium">{transaction.description}</div>
+                                    {transaction.installments && (
+                                        <div className="text-xs text-muted-foreground">
+                                        Parcela {transaction.installments.current}/{transaction.installments.total}
+                                        {' '}({transaction.installments.total - transaction.installments.current} restantes)
+                                        </div>
+                                    )}
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                    {transaction.category ? (
+                                        <Badge variant="secondary" className="flex items-center gap-2 w-fit">
+                                            <CategoryIcon category={transaction.category} className="h-4 w-4"/>
+                                            {transaction.category}
+                                        </Badge>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">Não categorizado</span>
+                                    )}
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}
+    </TableCell>
+                                    <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
+                                    <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Deletar
+                                                    </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                    </DialogHeader>
+                    {isDialogOpen && (
+                        <AddTransactionForm
+                            key={editingTransaction?.id || 'add'}
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsDialogOpen(false)}
+                        />
                     )}
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>Descrição</TableHead>
-                            <TableHead className="hidden sm:table-cell">Categoria</TableHead>
-                            <TableHead className="hidden md:table-cell">Data</TableHead>
-                            <TableHead className="text-right">Valor</TableHead>
-                            <TableHead className="w-[50px] text-right">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((transaction) => (
-                            <TableRow key={transaction.id}>
-                                <TableCell>
-                                <div className="font-medium">{transaction.description}</div>
-                                {transaction.installments && (
-                                    <div className="text-xs text-muted-foreground">
-                                    Parcela {transaction.installments.current}/{transaction.installments.total}
-                                    {' '}({transaction.installments.total - transaction.installments.current} restantes)
-                                    </div>
-                                )}
-                                </TableCell>
-                                <TableCell className="hidden sm:table-cell">
-                                {transaction.category ? (
-                                    <Badge variant="secondary" className="flex items-center gap-2 w-fit">
-                                        <CategoryIcon category={transaction.category} className="h-4 w-4"/>
-                                        {transaction.category}
-                                    </Badge>
-                                ) : (
-                                    <span className="text-xs text-muted-foreground">Não categorizado</span>
-                                )}
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell">{isClient ? formatDate(transaction.date) : <Skeleton className="h-4 w-20" />}
-</TableCell>
-                                <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
-                                <TableCell>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Editar
-                                        </DropdownMenuItem>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Deletar
-                                                </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        Essa ação não pode ser desfeita. Isso irá deletar permanentemente a transação da sua planilha.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </div>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
