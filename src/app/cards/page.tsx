@@ -63,19 +63,19 @@ export default function CardsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                {isDialogOpen && (
-                    <DialogContent key={dialogKey}>
-                        <DialogHeader>
-                            <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
-                            <DialogDescription />
-                        </DialogHeader>
+                <DialogContent key={dialogKey}>
+                    <DialogHeader>
+                        <DialogTitle>{editingCard ? 'Editar Cartão' : 'Adicionar Novo Cartão'}</DialogTitle>
+                        <DialogDescription />
+                    </DialogHeader>
+                    {isDialogOpen && (
                         <AddCardForm
                             cardToEdit={editingCard}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}
                         />
-                    </DialogContent>
-                )}
+                    )}
+                </DialogContent>
             </Dialog>
         </>
     );

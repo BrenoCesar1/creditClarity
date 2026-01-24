@@ -64,19 +64,19 @@ export default function DebtsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                {isDialogOpen && (
-                    <DialogContent key={dialogKey}>
-                        <DialogHeader>
-                            <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                            <DialogDescription />
-                        </DialogHeader>
+                <DialogContent key={dialogKey}>
+                    <DialogHeader>
+                        <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
+                        <DialogDescription />
+                    </DialogHeader>
+                    {isDialogOpen && (
                         <AddDebtForm
                             debtToEdit={editingDebt}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}
                         />
-                    </DialogContent>
-                )}
+                    )}
+                </DialogContent>
             </Dialog>
         </>
     );

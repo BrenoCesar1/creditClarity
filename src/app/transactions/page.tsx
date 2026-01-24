@@ -236,19 +236,19 @@ export default function TransactionsPage() {
                 </Card>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                {isDialogOpen && (
-                    <DialogContent key={dialogKey}>
-                        <DialogHeader>
-                            <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                            <DialogDescription />
-                        </DialogHeader>
+                <DialogContent key={dialogKey}>
+                    <DialogHeader>
+                        <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
+                        <DialogDescription />
+                    </DialogHeader>
+                    {isDialogOpen && (
                         <AddTransactionForm
                             transactionToEdit={editingTransaction}
                             onFormSubmit={handleFormSubmit}
                             onCancel={() => setIsDialogOpen(false)}
                         />
-                    </DialogContent>
-                )}
+                    )}
+                </DialogContent>
             </Dialog>
         </>
     );
