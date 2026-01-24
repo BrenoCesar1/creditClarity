@@ -191,7 +191,7 @@ export default function TransactionsPage() {
     </TableCell>
                                     <TableCell className="text-right">{formatCurrency(transaction.amount)}</TableCell>
                                     <TableCell>
-                                    <DropdownMenu>
+                                    <DropdownMenu modal={false}>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
                                                 <MoreHorizontal className="h-4 w-4" />

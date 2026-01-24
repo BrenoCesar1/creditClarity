@@ -77,7 +77,7 @@ export function DebtsList({ debts, onEditDebt }: { debts: Debt[], onEditDebt: (d
                 {formatCurrency(debt.amount)}
               </div>
               <div className="ml-auto">
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />

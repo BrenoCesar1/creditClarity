@@ -37,7 +37,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
             {cards.map((card) => (
                 <UICard key={card.id} className="bg-gradient-to-br from-primary to-accent text-primary-foreground p-6 flex flex-col justify-between h-52 shadow-lg relative">
                     <div className="absolute top-2 right-2">
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-white/20 hover:text-white">
                                     <MoreHorizontal className="h-4 w-4" />
