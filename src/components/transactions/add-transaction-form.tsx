@@ -73,26 +73,26 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-            <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl>
-                <Input placeholder="Ex: Almoço no restaurante" {...field} />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-            )}
-        />
+        <div className="grid grid-cols-6 gap-x-4 gap-y-6">
+            <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                <FormItem className="col-span-6">
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                    <Input placeholder="Ex: Almoço no restaurante" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" placeholder="150.00" {...field} value={field.value ?? ''} />
@@ -105,7 +105,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 control={form.control}
                 name="cardId"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Cartão</FormLabel>
                     <Select modal={false} onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
                         <FormControl>
@@ -127,7 +127,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
                   <FormLabel>Data da Transação</FormLabel>
                   <Popover modal={false}>
                     <PopoverTrigger asChild>
@@ -164,14 +164,11 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 </FormItem>
               )}
             />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
                 control={form.control}
                 name="installmentsCurrent"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-3">
                     <FormLabel>Parcela Atual (opcional)</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="1" {...field} value={field.value ?? ''} />
@@ -184,7 +181,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 control={form.control}
                 name="installmentsTotal"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-3">
                     <FormLabel>Total de Parcelas (opcional)</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />

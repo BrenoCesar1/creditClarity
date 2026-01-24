@@ -62,12 +62,12 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-6 gap-x-4 gap-y-6">
             <FormField
                 control={form.control}
                 name="person"
                 render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Pessoa</FormLabel>
                     <FormControl>
                         <Input placeholder="Ex: João Silva" {...field} />
@@ -80,7 +80,7 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="150.00" {...field} value={field.value ?? ''} />
@@ -93,7 +93,7 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
                 control={form.control}
                 name="reason"
                 render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Motivo</FormLabel>
                     <FormControl>
                         <Input placeholder="Ex: Empréstimo" {...field} />
@@ -102,13 +102,11 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
                     </FormItem>
                 )}
             />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
                 control={form.control}
                 name="installmentsCurrent"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-3">
                     <FormLabel>Parcela Atual (opcional)</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="1" {...field} value={field.value ?? ''}/>
@@ -121,7 +119,7 @@ export function AddDebtForm({ onFormSubmit, onCancel, debtToEdit }: AddDebtFormP
                 control={form.control}
                 name="installmentsTotal"
                 render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="col-span-3">
                     <FormLabel>Total de Parcelas (opcional)</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />

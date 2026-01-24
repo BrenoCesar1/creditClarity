@@ -47,25 +47,25 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do Cartão</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Cartão Principal" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Nome do Cartão</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Cartão Principal" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
             control={form.control}
             name="brand"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel>Bandeira</FormLabel>
                 <Select modal={false} onValueChange={field.onChange} value={field.value}>
                     <FormControl>
@@ -88,7 +88,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             control={form.control}
             name="last4"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel>Últimos 4 dígitos</FormLabel>
                 <FormControl>
                     <Input placeholder="1234" {...field} />
@@ -101,7 +101,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             control={form.control}
             name="expiry"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-1">
                 <FormLabel>Validade (MM/AA)</FormLabel>
                 <FormControl>
                     <Input placeholder="12/26" {...field} />
@@ -114,7 +114,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             control={form.control}
             name="dueDate"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-1">
                 <FormLabel>Dia do Vencimento</FormLabel>
                 <FormControl>
                     <Input type="number" placeholder="Ex: 10" {...field} value={field.value ?? ''} />
