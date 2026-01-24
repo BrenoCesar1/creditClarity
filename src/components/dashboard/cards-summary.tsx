@@ -64,7 +64,7 @@ export function CardsSummary({ cards, transactions }: { cards: CardType[]; trans
             {cards.map((card, index) => (
               <CarouselItem key={index} className="md:basis-1/2">
                 <div className="p-1">
-                  <div className="rounded-lg bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-48 shadow-lg">
+                  <div className="rounded-lg bg-gradient-to-br from-primary to-accent text-primary-foreground p-6 flex flex-col justify-between h-48 shadow-lg">
                     <div className="flex justify-between items-start">
                       <span className="font-semibold text-lg">{card.name}</span>
                        <CardLogo brand={card.brand} />

@@ -42,7 +42,7 @@ export function SpendingSummaryAI({ transactions }: { transactions: Transaction[
   };
 
   return (
-    <Card className="bg-gradient-to-br from-primary via-blue-600 to-accent text-primary-foreground h-full flex flex-col">
+    <Card className="bg-gradient-to-br from-primary to-accent text-primary-foreground h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-6 w-6" /> Resumo Inteligente

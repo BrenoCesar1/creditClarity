@@ -35,7 +35,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
     return (
         <div className="grid md:grid-cols-2 gap-4">
             {cards.map((card) => (
-                <UICard key={card.id} className="bg-gradient-to-br from-primary via-blue-600 to-blue-700 text-primary-foreground p-6 flex flex-col justify-between h-52 shadow-lg relative">
+                <UICard key={card.id} className="bg-gradient-to-br from-primary to-accent text-primary-foreground p-6 flex flex-col justify-between h-52 shadow-lg relative">
                     <div className="absolute top-2 right-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -50,7 +50,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
                                 </DropdownMenuItem>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             Deletar
                                         </DropdownMenuItem>
@@ -64,7 +64,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDelete(card.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                            <AlertDialogAction onClick={() => handleDelete(card.id)} variant="destructive">Deletar</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>

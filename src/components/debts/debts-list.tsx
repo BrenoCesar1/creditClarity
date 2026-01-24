@@ -90,7 +90,7 @@ export function DebtsList({ debts, onEditDebt }: { debts: Debt[], onEditDebt: (d
                         </DropdownMenuItem>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Deletar
                                 </DropdownMenuItem>
@@ -104,7 +104,7 @@ export function DebtsList({ debts, onEditDebt }: { debts: Debt[], onEditDebt: (d
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(debt.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(debt.id)} variant="destructive">Deletar</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>

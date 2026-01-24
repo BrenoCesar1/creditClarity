@@ -1,6 +1,7 @@
 'use client';
 
 import { SidebarTrigger } from '../ui/sidebar';
+import { ThemeToggle } from './theme-toggle';
 
 export function AppHeader() {
   return (
@@ -9,7 +10,7 @@ export function AppHeader() {
         <SidebarTrigger />
       </div>
       <div className="flex w-full items-center justify-end gap-4">
-        {/* User navigation can be added here if needed in the future */}
+        <ThemeToggle />
       </div>
     </header>
   );

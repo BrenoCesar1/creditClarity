@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
 import { DataProvider } from '@/context/data-context';
+import { ThemeProvider } from '@/components/layout/theme-provider';
 
 export const metadata: Metadata = {
   title: 'Credit Clarity',
@@ -27,20 +28,27 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <DataProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col w-full">
-                <AppHeader />
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-                  {children}
-                </main>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <DataProvider>
+            <SidebarProvider>
+              <div className="flex min-h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col w-full">
+                  <AppHeader />
+                  <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                    {children}
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
-          <Toaster />
-        </DataProvider>
+            </SidebarProvider>
+            <Toaster />
+          </DataProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

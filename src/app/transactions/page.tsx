@@ -41,6 +41,7 @@ export default function TransactionsPage() {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
+    const [dialogKey, setDialogKey] = useState(0);
 
     useEffect(() => {
       setIsClient(true);
@@ -59,11 +60,13 @@ export default function TransactionsPage() {
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
+        setDialogKey(prev => prev + 1);
         setIsDialogOpen(true);
     };
     
@@ -204,7 +207,7 @@ export default function TransactionsPage() {
                                             </DropdownMenuItem>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
+                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
                                                         <Trash2 className="mr-2 h-4 w-4" />
                                                         Deletar
                                                     </DropdownMenuItem>
@@ -218,7 +221,7 @@ export default function TransactionsPage() {
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(transaction.id)} className="bg-red-600 hover:bg-red-700">Deletar</AlertDialogAction>
+                                                        <AlertDialogAction onClick={() => handleDelete(transaction.id)} variant="destructive">Deletar</AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
@@ -237,14 +240,12 @@ export default function TransactionsPage() {
                     <DialogHeader>
                         <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
                     </DialogHeader>
-                    {isDialogOpen && (
-                        <AddTransactionForm
-                            key={editingTransaction?.id || 'add'}
-                            transactionToEdit={editingTransaction}
-                            onFormSubmit={handleFormSubmit}
-                            onCancel={() => setIsDialogOpen(false)}
-                        />
-                    )}
+                    <AddTransactionForm
+                        key={dialogKey}
+                        transactionToEdit={editingTransaction}
+                        onFormSubmit={handleFormSubmit}
+                        onCancel={() => setIsDialogOpen(false)}
+                    />
                 </DialogContent>
             </Dialog>
         </>
