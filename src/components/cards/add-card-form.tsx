@@ -46,7 +46,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -60,7 +60,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
             control={form.control}
             name="brand"
@@ -124,7 +124,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             )}
             />
         </div>
-        <div className="flex gap-2">
+        <div className="flex justify-end gap-4 pt-4">
             <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting}>
               Cancelar
             </Button>
