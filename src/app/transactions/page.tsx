@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AddTransactionForm } from "@/components/transactions/add-transaction-form";
 import { useData } from "@/context/data-context";
 import { Plus, BrainCircuit, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -37,7 +37,7 @@ function formatDate(dateString: string) {
 export default function TransactionsPage() {
     const { transactions, addTransaction, updateTransaction, deleteTransaction } = useData();
     const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isCategorizing, setIsCategorizing] = useState(false);
     const [isClient, setIsClient] = useState(false);
@@ -54,17 +54,17 @@ export default function TransactionsPage() {
             await addTransaction(values);
             toast({ title: 'Sucesso!', description: 'Transação adicionada.' });
         }
-        setIsDialogOpen(false);
+        setIsSheetOpen(false);
     };
 
     const handleEditClick = (transaction: Transaction) => {
         setEditingTransaction(transaction);
-        setIsDialogOpen(true);
+        setIsSheetOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingTransaction(null);
-        setIsDialogOpen(true);
+        setIsSheetOpen(true);
     };
     
     const handleDelete = async (transactionId: string) => {
@@ -232,22 +232,24 @@ export default function TransactionsPage() {
                     </CardContent>
                 </Card>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
-                        <DialogDescription>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</SheetTitle>
+                        <SheetDescription>
                             {editingTransaction ? 'Edite as informações da sua transação.' : 'Preencha as informações da nova transação.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <AddTransactionForm
-                        key={editingTransaction?.id || 'add'}
-                        transactionToEdit={editingTransaction}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                </DialogContent>
-            </Dialog>
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4">
+                        <AddTransactionForm
+                            key={editingTransaction?.id || 'add'}
+                            transactionToEdit={editingTransaction}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsSheetOpen(false)}
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
         </>
     );
 }

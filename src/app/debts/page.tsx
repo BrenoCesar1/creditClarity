@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AddDebtForm } from "@/components/debts/add-debt-form";
 import { DebtsList } from "@/components/debts/debts-list";
 import { useData } from "@/context/data-context";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 export default function DebtsPage() {
     const { debts, addDebt, updateDebt } = useData();
     const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
     const handleFormSubmit = async (values: Omit<Debt, 'id' | 'paid' | 'date' | 'avatarUrl'>) => {
@@ -25,7 +25,7 @@ export default function DebtsPage() {
                 await addDebt(values);
                 toast({ title: 'Sucesso!', description: 'Dívida adicionada.' });
             }
-            setIsDialogOpen(false);
+            setIsSheetOpen(false);
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro!', description: 'Não foi possível salvar a dívida.' });
         }
@@ -33,12 +33,12 @@ export default function DebtsPage() {
 
     const handleEditClick = (debt: Debt) => {
         setEditingDebt(debt);
-        setIsDialogOpen(true);
+        setIsSheetOpen(true);
     };
 
     const handleAddClick = () => {
         setEditingDebt(null);
-        setIsDialogOpen(true);
+        setIsSheetOpen(true);
     };
     
     return (
@@ -60,22 +60,24 @@ export default function DebtsPage() {
                 </Card>
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</DialogTitle>
-                        <DialogDescription>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>{editingDebt ? 'Editar Dívida' : 'Adicionar Nova Dívida'}</SheetTitle>
+                        <SheetDescription>
                             {editingDebt ? 'Edite as informações da dívida.' : 'Preencha as informações da nova dívida.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <AddDebtForm
-                        key={editingDebt?.id || 'add'}
-                        debtToEdit={editingDebt}
-                        onFormSubmit={handleFormSubmit}
-                        onCancel={() => setIsDialogOpen(false)}
-                    />
-                </DialogContent>
-            </Dialog>
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4">
+                        <AddDebtForm
+                            key={editingDebt?.id || 'add'}
+                            debtToEdit={editingDebt}
+                            onFormSubmit={handleFormSubmit}
+                            onCancel={() => setIsSheetOpen(false)}
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
         </>
     );
 }
