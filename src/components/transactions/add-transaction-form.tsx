@@ -143,7 +143,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                            format(field.value, 'dd/MM/yyyy', { locale: ptBR })
                           ) : (
                             <span>Escolha uma data</span>
                           )}
@@ -164,8 +164,6 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
-                        initialFocus
-                        captionLayout="dropdown-buttons"
                       />
                     </PopoverContent>
                   </Popover>
