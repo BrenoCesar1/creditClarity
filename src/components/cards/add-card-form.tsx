@@ -67,7 +67,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             render={({ field }) => (
                 <FormItem className="col-span-2 sm:col-span-1">
                 <FormLabel>Bandeira</FormLabel>
-                <Select modal={false} onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Selecione..." />

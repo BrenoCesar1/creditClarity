@@ -110,7 +110,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 render={({ field }) => (
                     <FormItem className="col-span-6 sm:col-span-2">
                     <FormLabel>Cartão</FormLabel>
-                    <Select modal={false} onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
@@ -132,7 +132,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               render={({ field }) => (
                 <FormItem className="col-span-6 flex flex-col sm:col-span-2 items-end">
                   <FormLabel className="w-full text-left">Data da Transação</FormLabel>
-                  <Popover modal={true} open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
