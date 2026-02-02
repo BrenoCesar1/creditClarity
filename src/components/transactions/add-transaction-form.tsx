@@ -128,7 +128,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                   control={form.control}
                   name="date"
                   render={({ field }) => (
-                    <FormItem className="col-span-6 sm:col-span-2">
+                    <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
                       <FormLabel>Data da Transação</FormLabel>
                       <Popover modal={false}>
                         <PopoverTrigger asChild>
@@ -141,7 +141,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                               )}
                             >
                               {field.value ? (
-                                format(field.value, "P", { locale: ptBR })
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
                               ) : (
                                 <span>Escolha uma data</span>
                               )}
@@ -151,6 +151,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
+                            locale={ptBR}
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
@@ -158,6 +159,9 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                               date > new Date() || date < new Date("1900-01-01")
                             }
                             initialFocus
+                            captionLayout="dropdown-buttons"
+                            fromYear={new Date().getFullYear() - 10}
+                            toYear={new Date().getFullYear()}
                           />
                         </PopoverContent>
                       </Popover>
@@ -196,7 +200,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
             </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
+        <div className="flex justify-end gap-4 pt-4">
             <Button type="button" variant="outline" onClick={onCancel} disabled={form.formState.isSubmitting}>
               Cancelar
             </Button>
