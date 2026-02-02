@@ -73,13 +73,13 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-6 gap-x-6 gap-y-8">
             <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-6">
                     <FormLabel>Descrição</FormLabel>
                     <FormControl>
                     <Input placeholder="Ex: Almoço no restaurante" {...field} />
@@ -88,116 +88,112 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                 </FormItem>
                 )}
             />
-            <div className="grid grid-cols-6 items-end gap-4">
-                <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                        <FormItem className="col-span-6 sm:col-span-2">
-                        <FormLabel>Valor</FormLabel>
-                        <FormControl>
-                            <Input type="number" step="0.01" placeholder="150.00" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="cardId"
-                    render={({ field }) => (
-                        <FormItem className="col-span-6 sm:col-span-2">
-                        <FormLabel>Cartão</FormLabel>
-                        <Select modal={false} onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {cards?.map(card => (
-                                    <SelectItem key={card.id} value={card.id}>{card.name} (final {card.last4})</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
-                      <FormLabel>Data da Transação</FormLabel>
-                      <Popover modal={false}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Escolha uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            locale={ptBR}
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={new Date().getFullYear() - 10}
-                            toYear={new Date().getFullYear()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
+            
+            <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                    <FormItem className="col-span-6 sm:col-span-2">
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="0.01" placeholder="150.00" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
                     </FormItem>
-                  )}
-                />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="installmentsCurrent"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Parcela Atual (opcional)</FormLabel>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="cardId"
+                render={({ field }) => (
+                    <FormItem className="col-span-6 sm:col-span-2">
+                    <FormLabel>Cartão</FormLabel>
+                    <Select modal={false} onValueChange={field.onChange} value={field.value} disabled={cards.length === 0}>
                         <FormControl>
-                            <Input type="number" placeholder="1" {...field} value={field.value ?? ''} />
+                        <SelectTrigger>
+                            <SelectValue placeholder={cards.length === 0 ? "Nenhum cartão" : "Selecione o cartão"} />
+                        </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="installmentsTotal"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Total de Parcelas (opcional)</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+                        <SelectContent>
+                            {cards?.map(card => (
+                                <SelectItem key={card.id} value={card.id}>{card.name} (final {card.last4})</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
+                  <FormLabel>Data da Transação</FormLabel>
+                  <Popover modal={false}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                          ) : (
+                            <span>Escolha uma data</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        locale={ptBR}
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                        captionLayout="dropdown-buttons"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+                control={form.control}
+                name="installmentsCurrent"
+                render={({ field }) => (
+                    <FormItem className="col-span-3">
+                    <FormLabel>Parcela Atual (opcional)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="1" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="installmentsTotal"
+                render={({ field }) => (
+                    <FormItem className="col-span-3">
+                    <FormLabel>Total de Parcelas (opcional)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="12" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
         </div>
 
         <div className="flex justify-end gap-4 pt-4">
