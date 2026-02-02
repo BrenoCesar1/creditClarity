@@ -76,7 +76,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-6 gap-x-6 gap-y-8">
+        <div className="grid grid-cols-6 gap-x-4 gap-y-6">
             <FormField
                 control={form.control}
                 name="description"
@@ -130,9 +130,9 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="col-span-6 flex flex-col sm:col-span-2">
-                  <FormLabel>Data da Transação</FormLabel>
-                  <Popover modal={false} open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <FormItem className="col-span-6 flex flex-col sm:col-span-2 items-end">
+                  <FormLabel className="w-full text-left">Data da Transação</FormLabel>
+                  <Popover modal={true} open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -143,7 +143,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                           )}
                         >
                           {field.value ? (
-                            format(field.value, 'dd/MM/yyyy', { locale: ptBR })
+                            format(field.value, "dd/MM/yyyy", { locale: ptBR })
                           ) : (
                             <span>Escolha uma data</span>
                           )}
