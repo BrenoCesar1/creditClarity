@@ -39,7 +39,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       onPointerDownOutside={(e) => {
         const target = e.target as HTMLElement;
-        if (target.closest('[data-radix-popper-content-wrapper]')) {
+        if (target.closest('[data-radix-popper-content-wrapper]') || target.closest('[data-radix-popover-content]')) {
           e.preventDefault();
         }
       }}
