@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '@/context/data-context';
+import { useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
@@ -37,6 +38,7 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }: AddTransactionFormProps) {
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -128,15 +130,15 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="col-span-6 sm:col-span-2 flex flex-col">
+                <FormItem className="col-span-6 flex flex-col sm:col-span-2">
                   <FormLabel>Data da Transação</FormLabel>
-                  <Popover modal={false}>
+                  <Popover modal={false} open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
+                            "w-full justify-start pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -154,7 +156,11 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                         locale={ptBR}
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                            if (!date) return;
+                            field.onChange(date);
+                            setCalendarOpen(false);
+                        }}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
