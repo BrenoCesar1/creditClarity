@@ -15,8 +15,23 @@ import type { Card as CardType, Transaction, Debt } from '@/lib/types';
 export function DashboardOverview() {
   const { cards, transactions, debts } = useData();
 
-  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
-  const totalDebt = debts
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthlyTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+  });
+
+  const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+  const monthlyDebts = debts.filter(d => {
+    const debtDate = new Date(d.date);
+    return debtDate.getMonth() === currentMonth && debtDate.getFullYear() === currentYear;
+  });
+
+  const totalDebt = monthlyDebts
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
   
@@ -29,12 +44,12 @@ export function DashboardOverview() {
 
   const stats = [
     {
-      title: 'Total Gasto',
+      title: 'Total Gasto (Mês)',
       value: `R$ ${totalSpent.toFixed(2)}`,
       icon: <DollarSign className="h-6 w-6 text-muted-foreground" />,
     },
     {
-      title: 'Dívidas a Receber',
+      title: 'Dívidas a Receber (Mês)',
       value: `R$ ${totalDebt.toFixed(2)}`,
       icon: <Users className="h-6 w-6 text-muted-foreground" />,
     },
@@ -63,11 +78,11 @@ export function DashboardOverview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <CardsSummary cards={cards} transactions={transactions} />
+          <CardsSummary cards={cards} transactions={monthlyTransactions} />
         </div>
         <div className="lg:col-span-2">
             <Suspense fallback={<Skeleton className="h-full w-full"/>}>
-              <SpendingSummaryAI transactions={transactions} />
+              <SpendingSummaryAI transactions={monthlyTransactions} />
             </Suspense>
         </div>
       </div>

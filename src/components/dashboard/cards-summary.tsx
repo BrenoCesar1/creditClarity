@@ -70,7 +70,7 @@ export function CardsSummary({ cards, transactions }: { cards: CardType[]; trans
                        <CardLogo brand={card.brand} />
                     </div>
                     <div className="text-right">
-                       <p className="text-sm opacity-80">Gasto Total</p>
+                       <p className="text-sm opacity-80">Gasto no Mês</p>
                        <p className="text-2xl font-bold tracking-wider">
                          R$ {getCardTotal(card.id).toFixed(2)}
                        </p>
