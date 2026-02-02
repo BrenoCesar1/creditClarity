@@ -15,6 +15,8 @@ import CategoryIcon from "@/components/dashboard/category-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription as AlertDialogDescriptionComponent, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -26,12 +28,8 @@ function formatCurrency(amount: number) {
 function formatDate(dateString: string) {
     const date = new Date(dateString);
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: userTimeZone
-    });
+    // Using date-fns to format to dd/MM/yyyy
+    return format(new Date(date), "dd/MM/yyyy");
 }
 
 export default function TransactionsPage() {
@@ -135,22 +133,27 @@ export default function TransactionsPage() {
         <>
             <div className="space-y-6">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle>Histórico de Transações</CardTitle>
                             <CardDescription>Seu histórico completo de transações.</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                             <Button variant="outline" onClick={handleCategorize} disabled={isCategorizing}>
                                 {isCategorizing ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
                                 ) : (
-                                    <BrainCircuit className="mr-2 h-4 w-4" />
+                                    <BrainCircuit className="h-4 w-4 sm:mr-2" />
                                 )}
-                                Categorizar com IA
+                                <span className="hidden sm:inline">
+                                    Categorizar com IA
+                                </span>
                             </Button>
                             <Button onClick={handleAddClick}>
-                                <Plus className="mr-2 h-4 w-4" /> Adicionar Transação
+                                <Plus className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">
+                                    Adicionar Transação
+                                </span>
                             </Button>
                         </div>
                     </CardHeader>
