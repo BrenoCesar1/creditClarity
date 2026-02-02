@@ -130,7 +130,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="col-span-6 flex flex-col sm:col-span-2 items-end">
+                <FormItem className="col-span-6 flex flex-col sm:col-span-2">
                   <FormLabel className="w-full text-left">Data da Transação</FormLabel>
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
@@ -164,6 +164,7 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
