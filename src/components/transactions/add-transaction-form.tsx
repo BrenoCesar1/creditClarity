@@ -9,20 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import type { Transaction } from '@/lib/types';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useData } from '@/context/data-context';
-import { useState } from 'react';
 
 const transactionSchema = z.object({
   description: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
   amount: z.coerce.number().positive({ message: 'O valor deve ser positivo.' }),
   cardId: z.string({ required_error: 'Selecione um cartão.' }),
-  date: z.date({ required_error: 'Selecione uma data.' }),
+  date: z.coerce.date({ required_error: 'Selecione uma data.' }),
   installmentsCurrent: z.coerce.number().optional(),
   installmentsTotal: z.coerce.number().optional(),
 });
@@ -38,7 +32,6 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }: AddTransactionFormProps) {
   const { cards } = useData();
   const isEditMode = !!transactionToEdit;
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -130,43 +123,28 @@ export function AddTransactionForm({ onFormSubmit, onCancel, transactionToEdit }
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="col-span-6 flex flex-col sm:col-span-2">
-                  <FormLabel className="w-full text-left">Data da Transação</FormLabel>
-                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                          ) : (
-                            <span>Escolha uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        locale={ptBR}
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => {
-                            if (!date) return;
-                            field.onChange(date);
-                            setCalendarOpen(false);
+                <FormItem className="col-span-6 sm:col-span-2">
+                  <FormLabel>Data da Transação</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="date"
+                        value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                // Create date from yyyy-mm-dd string, which is interpreted as UTC midnight
+                                const date = new Date(e.target.value);
+                                // Get the timezone offset in minutes and convert it to milliseconds
+                                const timezoneOffset = date.getTimezoneOffset() * 60000;
+                                // Create a new Date object adjusted for the local timezone
+                                const adjustedDate = new Date(date.getTime() + timezoneOffset);
+                                field.onChange(adjustedDate);
+                            } else {
+                                field.onChange(null);
+                            }
                         }}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        max={format(new Date(), 'yyyy-MM-dd')}
+                        />
+                    </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
