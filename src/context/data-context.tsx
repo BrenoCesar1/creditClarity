@@ -24,33 +24,50 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const calculateInstallments = (transactions: Transaction[], cards: Card[]): Transaction[] => {
     const today = new Date();
-    // Set time to 0 to compare dates only
     today.setHours(0, 0, 0, 0);
 
     return transactions.map(tx => {
-        // Skip if it's not an active installment transaction
         if (!tx.installments || tx.installments.current >= tx.installments.total) {
             return tx;
         }
 
         const card = cards.find(c => c.id === tx.cardId);
-        // Skip if card doesn't have a due date
         if (!card || !card.dueDate) {
             return tx;
         }
 
         const purchaseDate = new Date(tx.date);
-        purchaseDate.setHours(0,0,0,0);
+        purchaseDate.setHours(0, 0, 0, 0);
+
+        // Due date for the month of purchase
+        const dueDay = card.dueDate;
+        const purchaseYear = purchaseDate.getFullYear();
+        const purchaseMonth = purchaseDate.getMonth();
+        
+        // Let's find the closing date for the invoice period the purchase falls into.
+        // Assumption: closing date is 10 days before due date.
+        
+        // Closing date for the invoice that is due in the same month as purchase
+        let closingDate1 = new Date(purchaseYear, purchaseMonth, dueDay - 10);
+        closingDate1.setHours(0,0,0,0);
+        
+        let firstDueDate;
+        
+        if (purchaseDate <= closingDate1) {
+            // Purchase is for the bill due this month.
+            firstDueDate = new Date(purchaseYear, purchaseMonth, dueDay);
+        } else {
+            // Purchase is for the bill due next month.
+            firstDueDate = new Date(purchaseYear, purchaseMonth + 1, dueDay);
+        }
+        firstDueDate.setHours(0, 0, 0, 0);
 
         let paidCount = 0;
-        // Start counting from the month after the purchase
-        let cursor = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, card.dueDate);
-        cursor.setHours(0,0,0,0);
+        let cursor = new Date(firstDueDate);
 
-        // Count how many due dates have passed
+        // Count how many due dates have passed or are today
         while (cursor <= today && paidCount < tx.installments.total) {
             paidCount++;
-            // Move to the next month's due date
             cursor.setMonth(cursor.getMonth() + 1);
         }
 
@@ -102,9 +119,32 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             
             const transactionsWithCalculatedInstallments = calculateInstallments(loadedTransactions, loadedCards);
 
+            const originalTxMap = new Map(loadedTransactions.map(tx => [tx.id, tx]));
+            const updatesToPersist: { id: string; updates: Partial<Omit<Transaction, 'id'>> }[] = [];
+
+            transactionsWithCalculatedInstallments.forEach(newTx => {
+                const oldTx = originalTxMap.get(newTx.id);
+                if (newTx.installments && oldTx?.installments && newTx.installments.current !== oldTx.installments.current) {
+                    updatesToPersist.push({ id: newTx.id, updates: { installments: newTx.installments } });
+                }
+            });
+
             setCards(loadedCards);
             setTransactions(transactionsWithCalculatedInstallments.sort((a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()));
             setDebts(Array.isArray(debtsData) ? debtsData : []);
+
+            if (updatesToPersist.length > 0) {
+                Promise.all(updatesToPersist.map(update => 
+                    fetch('/api/data/transactions', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: update.id, updates: update.updates }),
+                    })
+                )).catch(err => {
+                    console.log("Failed to persist installment updates in background:", err);
+                });
+            }
+
         } catch (err: any) {
             console.error("Failed to load data from API", err);
             setError(err.message);
