@@ -80,7 +80,7 @@ export function CardsList({ cards, onEditCard }: { cards: Card[], onEditCard: (c
                         •••• {card.last4}
                         </p>
                         <p className="text-sm opacity-80">Validade {card.expiry}</p>
-                        <p className="text-sm opacity-80">Vencimento dia {card.dueDate}</p>
+                        <p className="text-sm opacity-80">Venc. dia {card.dueDate} / Fech. dia {card.closingDate}</p>
                     </div>
                 </UICard>
             ))}

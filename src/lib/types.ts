@@ -5,6 +5,7 @@ export interface Card {
   last4: string;
   expiry: string;
   dueDate: number;
+  closingDate: number;
 }
 
 export interface Transaction {

@@ -16,6 +16,7 @@ const cardSchema = z.object({
   last4: z.string().length(4, { message: 'Os últimos 4 dígitos são obrigatórios.' }).regex(/^\d{4}$/, { message: 'Apenas números são permitidos.'}),
   expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: 'Use o formato MM/AA.' }),
   dueDate: z.coerce.number().min(1, { message: 'O dia deve ser entre 1 e 31.' }).max(31, { message: 'O dia deve ser entre 1 e 31.' }),
+  closingDate: z.coerce.number().min(1, { message: 'O dia deve ser entre 1 e 31.' }).max(31, { message: 'O dia deve ser entre 1 e 31.' }),
 });
 
 type CardFormValues = z.infer<typeof cardSchema>;
@@ -37,6 +38,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
       last4: cardToEdit?.last4 || '',
       expiry: cardToEdit?.expiry || '',
       dueDate: cardToEdit?.dueDate || undefined,
+      closingDate: cardToEdit?.closingDate || undefined,
     }
   });
 
@@ -101,7 +103,7 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
             control={form.control}
             name="expiry"
             render={({ field }) => (
-                <FormItem className="col-span-1">
+                <FormItem className="col-span-2">
                 <FormLabel>Validade (MM/AA)</FormLabel>
                 <FormControl>
                     <Input placeholder="12/26" {...field} />
@@ -122,6 +124,19 @@ export function AddCardForm({ onFormSubmit, onCancel, cardToEdit }: AddCardFormP
                 <FormMessage />
                 </FormItem>
             )}
+            />
+            <FormField
+              control={form.control}
+              name="closingDate"
+              render={({ field }) => (
+                <FormItem className="col-span-1">
+                  <FormLabel>Dia do Fechamento</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Ex: 1" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
         </div>
         <div className="flex justify-end gap-4 pt-4">

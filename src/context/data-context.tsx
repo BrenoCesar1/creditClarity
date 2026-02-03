@@ -36,34 +36,32 @@ const calculateInstallments = (transactions: Transaction[], cards: Card[]): Tran
             return tx;
         }
 
+        // Use closing date if available, otherwise fallback to 10 days before due date
+        const closingDay = card.closingDate || card.dueDate - 10;
+        if (closingDay <= 0) return tx;
+
         const purchaseDate = new Date(tx.date);
         purchaseDate.setHours(0, 0, 0, 0);
 
-        // Due date for the month of purchase
         const dueDay = card.dueDate;
         const purchaseYear = purchaseDate.getFullYear();
         const purchaseMonth = purchaseDate.getMonth();
         
-        // Let's find the closing date for the invoice period the purchase falls into.
-        // Assumption: closing date is 10 days before due date.
+        // Determine the due date of the first invoice containing this purchase
+        const closingDateOfPurchaseMonth = new Date(purchaseYear, purchaseMonth, closingDay);
         
-        // Closing date for the invoice that is due in the same month as purchase
-        let closingDate1 = new Date(purchaseYear, purchaseMonth, dueDay - 10);
-        closingDate1.setHours(0,0,0,0);
-        
-        let firstDueDate;
-        
-        if (purchaseDate <= closingDate1) {
-            // Purchase is for the bill due this month.
-            firstDueDate = new Date(purchaseYear, purchaseMonth, dueDay);
+        let firstInvoiceDueDate;
+        if (purchaseDate <= closingDateOfPurchaseMonth) {
+            // Purchase made on or before this month's closing date. Due next month.
+            firstInvoiceDueDate = new Date(purchaseYear, purchaseMonth + 1, dueDay);
         } else {
-            // Purchase is for the bill due next month.
-            firstDueDate = new Date(purchaseYear, purchaseMonth + 1, dueDay);
+            // Purchase made after this month's closing date. Due the month after next.
+            firstInvoiceDueDate = new Date(purchaseYear, purchaseMonth + 2, dueDay);
         }
-        firstDueDate.setHours(0, 0, 0, 0);
+        firstInvoiceDueDate.setHours(0, 0, 0, 0);
 
         let paidCount = 0;
-        let cursor = new Date(firstDueDate);
+        let cursor = new Date(firstInvoiceDueDate);
 
         // Count how many due dates have passed or are today
         while (cursor <= today && paidCount < tx.installments.total) {
@@ -72,7 +70,7 @@ const calculateInstallments = (transactions: Transaction[], cards: Card[]): Tran
         }
 
         // Only update if the calculated current installment is greater than what's in the sheet
-        if (paidCount > (tx.installments.current || 0)) {
+        if (paidCount > (tx.installments.current || 0) && paidCount <= tx.installments.total) {
             return {
                 ...tx,
                 installments: {

@@ -35,11 +35,37 @@ export function DashboardOverview() {
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
   
-  const totalInstallmentsValue = transactions
+  const upcomingInvoiceTotal = transactions.reduce((total, t) => {
+    const card = cards.find(c => c.id === t.cardId);
+    if (!card || !card.closingDate) return total;
+    
+    const transactionDate = new Date(t.date);
+    const today = new Date();
+    
+    let upcomingClosingDate;
+    if (today.getDate() <= card.closingDate) {
+        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate);
+    } else {
+        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate);
+    }
+    
+    const previousClosingDate = new Date(upcomingClosingDate.getFullYear(), upcomingClosingDate.getMonth() - 1, card.closingDate);
+
+    if (transactionDate > previousClosingDate && transactionDate <= upcomingClosingDate) {
+        if (t.installments) {
+            return total + (t.amount / t.installments.total);
+        }
+        return total + t.amount;
+    }
+    return total;
+  }, 0);
+
+  const totalFutureInstallments = transactions
     .filter((t) => t.installments && t.installments.current < t.installments.total)
     .reduce((sum, t) => {
+        const remainingInstallments = t.installments!.total - (t.installments!.current || 0);
         const installmentValue = t.amount / t.installments!.total;
-        return sum + installmentValue;
+        return sum + (remainingInstallments * installmentValue);
     }, 0);
 
   const stats = [
@@ -54,15 +80,20 @@ export function DashboardOverview() {
       icon: <Users className="h-6 w-6 text-muted-foreground" />,
     },
     {
-        title: 'Próxima Fatura (Estimativa)',
-        value: `R$ ${totalInstallmentsValue.toFixed(2)}`,
+        title: 'Fatura Aberta (Estimativa)',
+        value: `R$ ${upcomingInvoiceTotal.toFixed(2)}`,
         icon: <CreditCard className="h-6 w-6 text-muted-foreground" />,
+    },
+    {
+        title: 'Saldo Parcelado Futuro',
+        value: `R$ ${totalFutureInstallments.toFixed(2)}`,
+        icon: <TrendingUp className="h-6 w-6 text-muted-foreground" />,
     }
   ];
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
