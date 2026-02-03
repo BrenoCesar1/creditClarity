@@ -39,65 +39,63 @@ export function DashboardOverview() {
     if (!card.closingDate) return totalForAllWindows;
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
+    // 1. Determine the upcoming closing date for the current open invoice
     let upcomingClosingDate;
     if (today.getDate() <= card.closingDate) {
-        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate, 23, 59, 59, 999);
+      // The invoice for the current calendar month is still open.
+      upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate, 23, 59, 59, 999);
     } else {
-        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate, 23, 59, 59, 999);
+      // The invoice for the current calendar month has already closed. We are calculating for the next month's invoice.
+      upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate, 23, 59, 59, 999);
     }
-    const previousClosingDate = new Date(upcomingClosingDate.getFullYear(), upcomingClosingDate.getMonth() - 1, card.closingDate, 23, 59, 59, 999);
+
+    // 2. Determine the previous closing date to define the current invoice period.
+    const previousClosingDate = new Date(upcomingClosingDate);
+    previousClosingDate.setMonth(previousClosingDate.getMonth() - 1);
 
     const cardTransactions = transactions.filter(t => t.cardId === card.id);
 
     const cardInvoiceTotal = cardTransactions.reduce((cardTotal, t) => {
-        const transactionDate = new Date(t.date);
+        const purchaseDate = new Date(t.date);
 
+        // --- Logic for single-payment (non-installment) transactions ---
         if (!t.installments) {
-            if (transactionDate > previousClosingDate && transactionDate <= upcomingClosingDate) {
+            // Check if the purchase date is within the current invoice period.
+            if (purchaseDate > previousClosingDate && purchaseDate <= upcomingClosingDate) {
                 return cardTotal + t.amount;
             }
             return cardTotal;
         }
+        
+        // --- Logic for installment transactions ---
         else {
             const installmentValue = t.amount / t.installments.total;
-            const purchaseDate = transactionDate;
-            const dueDay = card.dueDate;
-            const closingDay = card.closingDate;
+
+            // Determine the closing date of the very first invoice this purchase appeared on.
+            let firstInvoiceClosingDate;
             const purchaseYear = purchaseDate.getFullYear();
             const purchaseMonth = purchaseDate.getMonth();
-            const purchaseDay = purchaseDate.getDate();
 
-            let firstInvoiceDueMonth = purchaseMonth;
-            let firstInvoiceDueYear = purchaseYear;
+            if (purchaseDate.getDate() > card.closingDate) {
+                // If purchase was after closing day, it falls into the next month's invoice.
+                firstInvoiceClosingDate = new Date(purchaseYear, purchaseMonth + 1, card.closingDate, 23, 59, 59, 999);
+            } else {
+                // If purchase was on or before closing day, it falls into the current month's invoice.
+                firstInvoiceClosingDate = new Date(purchaseYear, purchaseMonth, card.closingDate, 23, 59, 59, 999);
+            }
 
-            if (purchaseDay > closingDay) {
-                firstInvoiceDueMonth += 1;
-            }
-            if (dueDay <= closingDay) {
-                firstInvoiceDueMonth += 1;
-            }
-            const firstInvoiceDueDate = new Date(firstInvoiceDueYear, firstInvoiceDueMonth, dueDay);
-            firstInvoiceDueDate.setHours(0,0,0,0);
-
-            const closingDateForCurrentInvoice = new Date(upcomingClosingDate);
-            closingDateForCurrentInvoice.setHours(0,0,0,0);
-            let currentInvoiceDueMonth = closingDateForCurrentInvoice.getMonth();
-            let currentInvoiceDueYear = closingDateForCurrentInvoice.getFullYear();
-            if (dueDay <= closingDay) {
-                currentInvoiceDueMonth += 1;
-            }
-            const currentInvoiceDueDate = new Date(currentInvoiceDueYear, currentInvoiceDueMonth, dueDay);
-            currentInvoiceDueDate.setHours(0,0,0,0);
+            // Determine the closing date of the final invoice for this purchase.
+            const lastInvoiceClosingDate = new Date(firstInvoiceClosingDate);
+            lastInvoiceClosingDate.setMonth(lastInvoiceClosingDate.getMonth() + t.installments.total - 1);
             
-            const totalInstallments = t.installments.total;
-            const lastInvoiceDueDate = new Date(firstInvoiceDueDate);
-            lastInvoiceDueDate.setMonth(lastInvoiceDueDate.getMonth() + totalInstallments - 1);
-            
-            if (currentInvoiceDueDate >= firstInvoiceDueDate && currentInvoiceDueDate <= lastInvoiceDueDate) {
+            // Check if the current open invoice (upcomingClosingDate) is within the payment window for this installment plan.
+            // Using a 2-day tolerance to avoid issues with timezones or daylight saving time.
+            const tolerance = 2 * 24 * 60 * 60 * 1000;
+            if (upcomingClosingDate.getTime() >= firstInvoiceClosingDate.getTime() - tolerance && upcomingClosingDate.getTime() <= lastInvoiceClosingDate.getTime() + tolerance) {
                 return cardTotal + installmentValue;
             }
+            
             return cardTotal;
         }
     }, 0);
