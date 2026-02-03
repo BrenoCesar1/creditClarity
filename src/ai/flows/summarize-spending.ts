@@ -8,8 +8,8 @@
  * - SummarizeSpendingInsightsOutput - The return type for the summarizeSpendingInsights function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const SummarizeSpendingInsightsInputSchema = z.object({
   spendingData: z.string().describe('Spending data in JSON format.'),
@@ -28,15 +28,25 @@ export async function summarizeSpendingInsights(input: SummarizeSpendingInsights
 
 const prompt = ai.definePrompt({
   name: 'summarizeSpendingInsightsPrompt',
-  input: {schema: SummarizeSpendingInsightsInputSchema},
-  output: {schema: SummarizeSpendingInsightsOutputSchema},
-  prompt: `You are an AI assistant helping users understand their spending habits.
+  input: { schema: SummarizeSpendingInsightsInputSchema },
+  output: { schema: SummarizeSpendingInsightsOutputSchema },
+  prompt: `Você é um assistente de IA ajudando usuários a entender seus hábitos de gastos e fatura do cartão.
+  
+  Os dados abaixo representam a **FATURA FECHADA** do mês de {{month}}.
+  Esta lista inclui:
+  1. Compras à vista feitas neste mês.
+  2. Parcelas de compras antigas que caíram nesta fatura (indicadas pelo campo 'installments').
+  
+  **Instruções:**
+  - Analise o **VALOR TOTAL** da fatura (some todos os itens fornecidos).
+  - Identifique o quanto é "Dívida Parcelada" (compras antigas) vs "Novos Gastos" (compras deste mês).
+  - Destaque os maiores gastos desta fatura específica.
+  - Forneça dicas baseadas no contexto de que algumas despesas são fixas/parceladas.
 
-  Analyze the following spending data for the month of {{month}} and provide a concise summary of key trends and anomalies. Focus on identifying areas for potential savings and better financial management.
-
-  Spending Data:
+  Dados da Fatura:
   {{spendingData}}
-  \nOutput the response in a paragraph format. Be friendly and conversational, so it feels natural.
+  
+  Retorne a resposta em formato de parágrafo curto, em português do Brasil. Seja direto, amigável e conversacional. Use valores monetários (R$) no seu resumo.
   `,
 });
 
@@ -47,7 +57,7 @@ const summarizeSpendingInsightsFlow = ai.defineFlow(
     outputSchema: SummarizeSpendingInsightsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

@@ -10,7 +10,7 @@ const getAuth = () => {
     if (!serviceEmail || !privateKey) {
         throw new Error('As credenciais da conta de serviço Google (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY) não foram encontradas nas variáveis de ambiente. Verifique sua configuração na Vercel.');
     }
-    
+
     try {
         const credentials = {
             client_email: serviceEmail,
@@ -21,7 +21,7 @@ const getAuth = () => {
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         });
         return auth;
-    } catch(error: any) {
+    } catch (error: any) {
         // This block is a safeguard but the main error is caught in getSheetData
         if (error.message && (error.message.includes('DECODER') || error.message.includes('unsupported'))) {
             throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
@@ -56,13 +56,13 @@ async function getSheetData(sheetName: string): Promise<any[][]> {
             throw new Error(`Erro de formato na chave privada (GOOGLE_PRIVATE_KEY).\nIsso geralmente acontece na Vercel. Para corrigir:\n\n1. Copie sua chave privada (incluindo o início e o fim).\n2. Transforme-a em uma ÚNICA linha, substituindo cada quebra de linha pelo texto literal "\\n".\n3. Cole este valor na variável de ambiente GOOGLE_PRIVATE_KEY na Vercel.`);
         }
         if (error.code === 403) { // Permission denied
-             throw new Error(`Permissão negada para acessar a planilha. Verifique dois pontos: 1) Você compartilhou a planilha com o e-mail da conta de serviço ('${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}') e deu permissão de "Editor". 2) A API do Google Sheets está ativada no seu projeto Google Cloud.`);
+            throw new Error(`Permissão negada para acessar a planilha. Verifique dois pontos: 1) Você compartilhou a planilha com o e-mail da conta de serviço ('${process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL}') e deu permissão de "Editor". 2) A API do Google Sheets está ativada no seu projeto Google Cloud.`);
         }
         if (error.code === 400 && error.message.includes('Unable to parse range')) {
             throw new Error(`A aba "${sheetName}" não foi encontrada ou está mal formatada na sua planilha. Verifique o nome da aba e se ela tem algum conteúdo.`);
         }
         if (error.code === 404) { // Not found
-             throw new Error(`Planilha não encontrada. Verifique se o GOOGLE_SHEET_ID no seu arquivo .env está correto.`);
+            throw new Error(`Planilha não encontrada. Verifique se o GOOGLE_SHEET_ID no seu arquivo .env está correto.`);
         }
         throw new Error(`Ocorreu um erro ao buscar dados da planilha: ${error.message}`);
     }
@@ -85,12 +85,12 @@ async function updateSheetCell(sheetName: string, rowIndex: number, colIndex: nu
     const colLetter = String.fromCharCode('A'.charCodeAt(0) + colIndex);
     const range = `${sheetName}!${colLetter}${rowIndex}`;
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
-      range: range,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [[value]],
-      },
+        spreadsheetId: SHEET_ID,
+        range: range,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: {
+            values: [[value]],
+        },
     });
 }
 
@@ -104,13 +104,13 @@ async function deleteSheetRowById(sheetName: string, id: string) {
         getSheetData(sheetName),
         sheets.spreadsheets.get({ spreadsheetId: SHEET_ID }),
     ]);
-    
+
     const headers = data[0];
     const idIndex = headers.indexOf('id');
     if (idIndex === -1) throw new Error(`Coluna 'id' não encontrada na aba '${sheetName}'.`);
 
     const rowIndexToDelete = data.findIndex(row => row[idIndex] === id);
-    
+
     if (rowIndexToDelete === -1) {
         console.warn(`Row with id ${id} not found in ${sheetName}. Nothing to delete.`);
         return;
@@ -121,7 +121,7 @@ async function deleteSheetRowById(sheetName: string, id: string) {
     if (sheetId === null || sheetId === undefined) {
         throw new Error(`Aba com o nome '${sheetName}' não foi encontrada na planilha.`);
     }
-    
+
     await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
         requestBody: {
@@ -150,7 +150,7 @@ export async function getCards(): Promise<Card[]> {
     if (data.length < 1) return []; // Allow empty sheet
     const headers = data[0] || [];
     const requiredHeaders = ['id', 'name', 'brand', 'last4', 'expiry', 'dueDate', 'closingDate'];
-    if(!requiredHeaders.every(h => headers.includes(h))) {
+    if (!requiredHeaders.every(h => headers.includes(h))) {
         throw new Error(`A aba "cards" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
     }
     if (data.length < 2) return [];
@@ -212,7 +212,7 @@ export async function getTransactions(): Promise<Transaction[]> {
     if (data.length < 1) return [];
     const headers = data[0] || [];
     const requiredHeaders = ['id', 'cardId', 'description', 'amount', 'date', 'category', 'installments_current', 'installments_total'];
-     if(!requiredHeaders.every(h => headers.includes(h))) {
+    if (!requiredHeaders.every(h => headers.includes(h))) {
         throw new Error(`A aba "transactions" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
     }
     if (data.length < 2) return [];
@@ -220,7 +220,7 @@ export async function getTransactions(): Promise<Transaction[]> {
         id: row[headers.indexOf('id')],
         cardId: row[headers.indexOf('cardId')],
         description: row[headers.indexOf('description')],
-        amount: parseFloat(row[headers.indexOf('amount')] || '0'),
+        amount: parseFloat((row[headers.indexOf('amount')] || '0').toString().replace(',', '.')),
         date: row[headers.indexOf('date')],
         category: row[headers.indexOf('category')] as Transaction['category'] || undefined,
         installments: (row[headers.indexOf('installments_current')] && row[headers.indexOf('installments_total')]) ? {
@@ -267,9 +267,9 @@ export async function updateTransactionInSheet(transactionId: string, updates: P
 
     for (const key of Object.keys(updates)) {
         if (key === 'id') continue;
-        
+
         let value = (updates as any)[key];
-        
+
         if (key === 'installments') {
             const currentIdx = headerMap.get('installments_current');
             if (currentIdx !== undefined) {
@@ -302,7 +302,7 @@ export async function getDebts(): Promise<Debt[]> {
     if (data.length < 1) return [];
     const headers = data[0] || [];
     const requiredHeaders = ['id', 'person', 'avatarUrl', 'amount', 'reason', 'paid', 'date', 'installments_current', 'installments_total'];
-    if(!requiredHeaders.every(h => headers.includes(h))) {
+    if (!requiredHeaders.every(h => headers.includes(h))) {
         throw new Error(`A aba "debts" está com cabeçalhos ausentes ou incorretos. Garanta que a primeira linha contenha: ${requiredHeaders.join(', ')}`);
     }
     if (data.length < 2) return [];
@@ -310,7 +310,7 @@ export async function getDebts(): Promise<Debt[]> {
         id: row[headers.indexOf('id')],
         person: row[headers.indexOf('person')],
         avatarUrl: row[headers.indexOf('avatarUrl')],
-        amount: parseFloat(row[headers.indexOf('amount')] || '0'),
+        amount: parseFloat((row[headers.indexOf('amount')] || '0').toString().replace(',', '.')),
         reason: row[headers.indexOf('reason')],
         paid: (row[headers.indexOf('paid')] || 'false').toLowerCase() === 'true',
         date: row[headers.indexOf('date')],
@@ -365,7 +365,7 @@ export async function updateDebtInSheet(debtId: string, updates: Partial<Omit<De
     for (const key of Object.keys(updates)) {
         if (key === 'id') continue;
         let value = (updates as any)[key];
-        
+
         if (key === 'installments') {
             const currentIdx = headerMap.get('installments_current');
             if (currentIdx !== undefined) {

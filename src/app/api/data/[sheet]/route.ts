@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { 
+import {
     getCards, getTransactions, getDebts,
     addCardToSheet, addTransactionToSheet, addDebtToSheet,
     updateDebtInSheet, updateTransactionInSheet, deleteDebtFromSheet,
@@ -11,14 +11,14 @@ export async function GET(
     request: Request,
     { params }: { params: { sheet: string } }
 ) {
-    const sheet = params.sheet;
+    const { sheet } = await params;
     try {
         let data;
         if (sheet === 'cards') data = await getCards();
         else if (sheet === 'transactions') data = await getTransactions();
         else if (sheet === 'debts') data = await getDebts();
         else return NextResponse.json({ error: 'Sheet not found' }, { status: 404 });
-        
+
         return NextResponse.json(data);
     } catch (error: any) {
         console.error(error);
@@ -57,7 +57,7 @@ export async function PUT(
         else if (sheet === 'debts') await updateDebtInSheet(id, updates);
         else if (sheet === 'cards') await updateCardInSheet(id, updates);
         else return NextResponse.json({ error: 'Sheet not found or not updatable' }, { status: 404 });
-        
+
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error: any) {
         console.error(error);
@@ -82,7 +82,7 @@ export async function DELETE(
         else if (sheet === 'transactions') await deleteTransactionFromSheet(id);
         else if (sheet === 'cards') await deleteCardFromSheet(id);
         else return NextResponse.json({ error: 'Sheet not found or not deletable' }, { status: 404 });
-        
+
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error: any) {
         console.error(error);

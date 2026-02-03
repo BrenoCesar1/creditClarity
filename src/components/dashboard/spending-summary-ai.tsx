@@ -18,17 +18,18 @@ export function SpendingSummaryAI({ transactions }: { transactions: Transaction[
     setSummary('');
 
     try {
-        const month = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric'});
-        const spendingData = JSON.stringify(transactions.map(t => ({
-            description: t.description,
-            amount: t.amount,
-            date: t.date,
-            category: t.category,
-        })));
-      
-        const result = await summarizeSpendingInsights({ spendingData, month });
+      const month = new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+      const spendingData = JSON.stringify(transactions.map(t => ({
+        description: t.description,
+        amount: t.amount,
+        date: t.date,
+        category: t.category,
+        installments: t.installments ? `${t.installments.current}/${t.installments.total}` : undefined,
+      })));
 
-        setSummary(result.summary);
+      const result = await summarizeSpendingInsights({ spendingData, month });
+
+      setSummary(result.summary);
     } catch (error) {
       console.error(error);
       toast({
@@ -45,7 +46,7 @@ export function SpendingSummaryAI({ transactions }: { transactions: Transaction[
     <Card className="bg-gradient-to-br from-primary to-accent text-primary-foreground h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6" /> Resumo Inteligente
+          <Sparkles className="h-6 w-6" /> Resumo Inteligente
         </CardTitle>
         <CardDescription className="text-primary-foreground/80">
           Receba insights sobre seus gastos com o poder da IA.

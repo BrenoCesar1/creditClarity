@@ -15,122 +15,43 @@ export function DashboardOverview() {
   const { cards, transactions, debts } = useData();
 
   const now = new Date();
-  const currentMonthUTC = now.getUTCMonth();
-  const currentYearUTC = now.getUTCFullYear();
+  // Calculate Total Spent based on Billing Cycle (not calendar month)
+  // If card closes on 14th:
+  // - Current Date: Feb 3 -> Cycle: Jan 15 to Feb 14
+  // - Current Date: Feb 15 -> Cycle: Feb 15 to Mar 14
+  const closingDay = cards[0]?.closingDate || 1; // Default to 1st if no card
 
-  const monthlyTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      return transactionDate.getUTCMonth() === currentMonthUTC && transactionDate.getUTCFullYear() === currentYearUTC;
-  });
+  let startOfCycle = new Date(now);
+  if (now.getDate() <= closingDay) {
+    // We are in the cycle that started last month
+    startOfCycle.setMonth(startOfCycle.getMonth() - 1);
+  }
+  startOfCycle.setDate(closingDay + 1);
+  startOfCycle.setHours(0, 0, 0, 0);
 
-  const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+  // Calculate Total Spent based on Transaction Type
+  // Since the 'transactions' list represents the current invoice (including old installments),
+  // we split it into:
+  // 1. Installments (Parcelado)
+  // 2. Spot Purchases (À vista / Total Gasto Mês)
+
+  const totalInstallmentsThisMonth = transactions
+    .filter(t => t.installments)
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalSpent = transactions
+    .filter(t => !t.installments)
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const totalDebt = debts
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
-  
-  const upcomingInvoiceTotal = cards.reduce((total, card) => {
-    if (!card.closingDate) return total;
 
-    const today = new Date();
-    
-    let invoiceEndYear = today.getUTCFullYear();
-    let invoiceEndMonth = today.getUTCMonth();
-    
-    if (today.getUTCDate() > card.closingDate) {
-        invoiceEndMonth += 1;
-        if (invoiceEndMonth > 11) {
-            invoiceEndMonth = 0;
-            invoiceEndYear += 1;
-        }
-    }
-    
-    const invoiceEndDate = new Date(Date.UTC(invoiceEndYear, invoiceEndMonth, card.closingDate, 23, 59, 59, 999));
+  // Fatura Aberta: All transactions + unpaid debts
+  const upcomingInvoiceTotal = transactions.reduce((sum, t) => sum + t.amount, 0) + totalDebt;
 
-    let invoiceStartYear = invoiceEndYear;
-    let invoiceStartMonth = invoiceEndMonth -1;
-    if(invoiceStartMonth < 0) {
-        invoiceStartMonth = 11;
-        invoiceStartYear -= 1;
-    }
-
-    const invoiceStartDate = new Date(Date.UTC(invoiceStartYear, invoiceStartMonth, card.closingDate + 1, 0, 0, 0, 0));
-
-    const cardTransactions = transactions.filter(t => t.cardId === card.id);
-    
-    let cardTotalForInvoice = 0;
-
-    cardTransactions.forEach(t => {
-        const purchaseDate = new Date(t.date);
-
-        if (t.installments) {
-            const installmentValue = t.amount / t.installments.total;
-            
-            let firstInstallmentYear = purchaseDate.getUTCFullYear();
-            let firstInstallmentMonth = purchaseDate.getUTCMonth();
-
-            if (purchaseDate.getUTCDate() > card.closingDate) {
-                firstInstallmentMonth += 1;
-                if (firstInstallmentMonth > 11) {
-                    firstInstallmentMonth = 0;
-                    firstInstallmentYear += 1;
-                }
-            }
-            
-            const firstInstallmentClosingDate = new Date(Date.UTC(firstInstallmentYear, firstInstallmentMonth, card.closingDate));
-
-            for (let i = 0; i < t.installments.total; i++) {
-                const currentInstallmentClosingDate = new Date(firstInstallmentClosingDate);
-                currentInstallmentClosingDate.setUTCMonth(firstInstallmentClosingDate.getUTCMonth() + i);
-
-                if (currentInstallmentClosingDate.getUTCFullYear() === invoiceEndDate.getUTCFullYear() &&
-                    currentInstallmentClosingDate.getUTCMonth() === invoiceEndDate.getUTCMonth()) {
-                    cardTotalForInvoice += installmentValue;
-                    break; 
-                }
-            }
-        } else {
-            if (purchaseDate >= invoiceStartDate && purchaseDate <= invoiceEndDate) {
-                cardTotalForInvoice += t.amount;
-            }
-        }
-    });
-
-    return total + cardTotalForInvoice;
-  }, 0);
-
-
-  const totalFutureInstallments = transactions.reduce((sum, t) => {
-    if (!t.installments) return sum;
-    
-    const card = cards.find(c => c.id === t.cardId);
-    if (!card) return sum;
-    
-    const installmentValue = t.amount / t.installments.total;
-    const purchaseDate = new Date(t.date);
-    const today = new Date();
-
-    let firstInvoiceYear = purchaseDate.getUTCFullYear();
-    let firstInvoiceMonth = purchaseDate.getUTCMonth();
-    if (purchaseDate.getUTCDate() > card.closingDate) {
-        firstInvoiceMonth += 1;
-    }
-    const firstInvoiceClosing = new Date(Date.UTC(firstInvoiceYear, firstInvoiceMonth, card.closingDate));
-
-    let currentInvoiceYear = today.getUTCFullYear();
-    let currentInvoiceMonth = today.getUTCMonth();
-    if (today.getUTCDate() > card.closingDate) {
-        currentInvoiceMonth += 1;
-    }
-    const currentInvoiceClosing = new Date(Date.UTC(currentInvoiceYear, currentInvoiceMonth, card.closingDate));
-
-    const monthsDiff = (currentInvoiceClosing.getUTCFullYear() - firstInvoiceClosing.getUTCFullYear()) * 12 + (currentInvoiceClosing.getUTCMonth() - firstInvoiceClosing.getUTCMonth());
-    
-    const paidInstallments = Math.max(0, Math.min(monthsDiff, t.installments.total));
-    const remainingInstallments = t.installments.total - paidInstallments;
-
-    return sum + (remainingInstallments * installmentValue);
-  }, 0);
+  // For other components that need 'monthlyTransactions', we use the full list since it represents the current invoice
+  const monthlyTransactions = transactions;
 
 
   const stats = [
@@ -138,6 +59,7 @@ export function DashboardOverview() {
       title: 'Total Gasto (Mês)',
       value: `R$ ${totalSpent.toFixed(2)}`,
       icon: <DollarSign className="h-6 w-6 text-muted-foreground" />,
+      description: 'Compras à vista na fatura',
     },
     {
       title: 'Dívidas a Receber',
@@ -145,15 +67,16 @@ export function DashboardOverview() {
       icon: <Users className="h-6 w-6 text-muted-foreground" />,
     },
     {
-        title: 'Fatura Aberta (Estimativa)',
-        value: `R$ ${upcomingInvoiceTotal.toFixed(2)}`,
-        icon: <CreditCard className="h-6 w-6 text-muted-foreground" />,
+      title: 'Fatura Aberta (Total)',
+      value: `R$ ${upcomingInvoiceTotal.toFixed(2)}`,
+      icon: <CreditCard className="h-6 w-6 text-muted-foreground" />,
     },
     {
-        title: 'Saldo Parcelado Futuro',
-        value: `R$ ${totalFutureInstallments.toFixed(2)}`,
-        icon: <TrendingUp className="h-6 w-6 text-muted-foreground" />,
-    }
+      title: 'Total Parcelado (Mês)',
+      value: `R$ ${totalInstallmentsThisMonth.toFixed(2)}`,
+      icon: <TrendingUp className="h-6 w-6 text-muted-foreground" />,
+      description: 'Parcelas na fatura atual',
+    },
   ];
 
   return (
@@ -177,12 +100,12 @@ export function DashboardOverview() {
           <CardsSummary cards={cards} transactions={monthlyTransactions} />
         </div>
         <div className="lg:col-span-2">
-            <Suspense fallback={<Skeleton className="h-full w-full"/>}>
-              <SpendingSummaryAI transactions={monthlyTransactions} />
-            </Suspense>
+          <Suspense fallback={<Skeleton className="h-full w-full" />}>
+            <SpendingSummaryAI transactions={monthlyTransactions} />
+          </Suspense>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
           <Card>
