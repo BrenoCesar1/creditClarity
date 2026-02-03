@@ -26,12 +26,7 @@ export function DashboardOverview() {
 
   const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-  const monthlyDebts = debts.filter(d => {
-    const debtDate = new Date(d.date);
-    return debtDate.getMonth() === currentMonth && debtDate.getFullYear() === currentYear;
-  });
-
-  const totalDebt = monthlyDebts
+  const totalDebt = debts
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
   
@@ -39,18 +34,15 @@ export function DashboardOverview() {
     if (!card.closingDate) return totalForAllWindows;
 
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    // 1. Determine the upcoming closing date for the current open invoice
     let upcomingClosingDate;
     if (today.getDate() <= card.closingDate) {
-      // The invoice for the current calendar month is still open.
       upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate, 23, 59, 59, 999);
     } else {
-      // The invoice for the current calendar month has already closed. We are calculating for the next month's invoice.
       upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate, 23, 59, 59, 999);
     }
 
-    // 2. Determine the previous closing date to define the current invoice period.
     const previousClosingDate = new Date(upcomingClosingDate);
     previousClosingDate.setMonth(previousClosingDate.getMonth() - 1);
 
@@ -59,41 +51,33 @@ export function DashboardOverview() {
     const cardInvoiceTotal = cardTransactions.reduce((cardTotal, t) => {
         const purchaseDate = new Date(t.date);
 
-        // --- Logic for single-payment (non-installment) transactions ---
         if (!t.installments) {
-            // Check if the purchase date is within the current invoice period.
             if (purchaseDate > previousClosingDate && purchaseDate <= upcomingClosingDate) {
                 return cardTotal + t.amount;
             }
             return cardTotal;
         }
         
-        // --- Logic for installment transactions ---
         else {
             const installmentValue = t.amount / t.installments.total;
 
-            // Determine the closing date of the very first invoice this purchase appeared on.
-            let firstInvoiceClosingDate;
-            const purchaseYear = purchaseDate.getFullYear();
-            const purchaseMonth = purchaseDate.getMonth();
+            const closingDateOfPurchasePeriod = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), card.closingDate, 23, 59, 59, 999);
 
-            if (purchaseDate.getDate() > card.closingDate) {
-                // If purchase was after closing day, it falls into the next month's invoice.
-                firstInvoiceClosingDate = new Date(purchaseYear, purchaseMonth + 1, card.closingDate, 23, 59, 59, 999);
+            let firstInvoiceClosingDate;
+            if (purchaseDate > closingDateOfPurchasePeriod) {
+                firstInvoiceClosingDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, card.closingDate);
             } else {
-                // If purchase was on or before closing day, it falls into the current month's invoice.
-                firstInvoiceClosingDate = new Date(purchaseYear, purchaseMonth, card.closingDate, 23, 59, 59, 999);
+                firstInvoiceClosingDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), card.closingDate);
             }
 
-            // Determine the closing date of the final invoice for this purchase.
-            const lastInvoiceClosingDate = new Date(firstInvoiceClosingDate);
-            lastInvoiceClosingDate.setMonth(lastInvoiceClosingDate.getMonth() + t.installments.total - 1);
-            
-            // Check if the current open invoice (upcomingClosingDate) is within the payment window for this installment plan.
-            // Using a 2-day tolerance to avoid issues with timezones or daylight saving time.
-            const tolerance = 2 * 24 * 60 * 60 * 1000;
-            if (upcomingClosingDate.getTime() >= firstInvoiceClosingDate.getTime() - tolerance && upcomingClosingDate.getTime() <= lastInvoiceClosingDate.getTime() + tolerance) {
-                return cardTotal + installmentValue;
+            for (let i = 0; i < t.installments.total; i++) {
+                const installmentClosingDate = new Date(firstInvoiceClosingDate);
+                installmentClosingDate.setMonth(installmentClosingDate.getMonth() + i);
+
+                if (installmentClosingDate.getFullYear() === upcomingClosingDate.getFullYear() &&
+                    installmentClosingDate.getMonth() === upcomingClosingDate.getMonth()) {
+                    return cardTotal + installmentValue;
+                }
             }
             
             return cardTotal;
@@ -117,7 +101,7 @@ export function DashboardOverview() {
       icon: <DollarSign className="h-6 w-6 text-muted-foreground" />,
     },
     {
-      title: 'Dívidas a Receber (Mês)',
+      title: 'Dívidas a Receber',
       value: `R$ ${totalDebt.toFixed(2)}`,
       icon: <Users className="h-6 w-6 text-muted-foreground" />,
     },
