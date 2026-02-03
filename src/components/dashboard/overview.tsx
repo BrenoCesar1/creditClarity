@@ -16,12 +16,12 @@ export function DashboardOverview() {
   const { cards, transactions, debts } = useData();
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const currentMonthUTC = now.getUTCMonth();
+  const currentYearUTC = now.getUTCFullYear();
 
   const monthlyTransactions = transactions.filter(t => {
       const transactionDate = new Date(t.date);
-      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+      return transactionDate.getUTCMonth() === currentMonthUTC && transactionDate.getUTCFullYear() === currentYearUTC;
   });
 
   const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
@@ -33,62 +33,76 @@ export function DashboardOverview() {
   const upcomingInvoiceTotal = cards.reduce((total, card) => {
     if (!card.closingDate) return total;
 
+    // Use UTC for all date calculations to avoid timezone issues.
     const today = new Date();
-    const currentYearUTC = today.getUTCFullYear();
-    const currentMonthUTC = today.getUTCMonth();
-    const currentDayUTC = today.getUTCDate();
     
-    // Determine the upcoming closing date we are calculating for.
-    // Example: If today is Jan 20 and closing day is 14, the next closing is Feb 14.
-    const upcomingClosingDateUTC = new Date(Date.UTC(currentYearUTC, currentMonthUTC, card.closingDate));
-    if (currentDayUTC > card.closingDate) {
-      upcomingClosingDateUTC.setUTCMonth(upcomingClosingDateUTC.getUTCMonth() + 1);
+    // 1. Determine the current open invoice period for the card.
+    // An invoice period runs from (previous_closing_day + 1) to (current_closing_day).
+
+    // Find the closing date for the CURRENTLY OPEN invoice.
+    // If today is Feb 20 and closing day is 14, the open invoice closes on Mar 14.
+    let closingDateYear = today.getUTCFullYear();
+    let closingDateMonth = today.getUTCMonth(); // Jan=0, Feb=1, etc.
+    if (today.getUTCDate() > card.closingDate) {
+        closingDateMonth += 1;
     }
-    
-    // The period for this upcoming invoice starts the day after the *previous* closing date.
-    const invoicePeriodEndDate = new Date(upcomingClosingDateUTC);
-    const invoicePeriodStartDate = new Date(upcomingClosingDateUTC);
-    invoicePeriodStartDate.setUTCMonth(invoicePeriodStartDate.getUTCMonth() - 1);
-    invoicePeriodStartDate.setUTCDate(invoicePeriodStartDate.getUTCDate() + 1);
-    invoicePeriodStartDate.setUTCHours(0, 0, 0, 0);
-    invoicePeriodEndDate.setUTCHours(23, 59, 59, 999);
+    // Handle month overflow (e.g., December -> January of next year)
+    if (closingDateMonth > 11) {
+        closingDateMonth = 0;
+        closingDateYear += 1;
+    }
+    const invoiceEndDate = new Date(Date.UTC(closingDateYear, closingDateMonth, card.closingDate, 23, 59, 59, 999));
 
+    // The start date is the day after the previous closing date.
+    let startDateYear = closingDateYear;
+    let startDateMonth = closingDateMonth - 1;
+    if (startDateMonth < 0) {
+        startDateMonth = 11;
+        startDateYear -= 1;
+    }
+    const invoiceStartDate = new Date(Date.UTC(startDateYear, startDateMonth, card.closingDate + 1, 0, 0, 0, 0));
 
+    // 2. Calculate the total for this card's open invoice.
     let cardTotalForInvoice = 0;
     const cardTransactions = transactions.filter(t => t.cardId === card.id);
 
     cardTransactions.forEach(t => {
-      const purchaseDate = new Date(t.date);
-
-      // Simple purchases (not installments)
+      const purchaseDate = new Date(t.date); // t.date is an ISO string, so it's parsed as UTC.
+      
       if (!t.installments) {
-        if (purchaseDate >= invoicePeriodStartDate && purchaseDate <= invoicePeriodEndDate) {
+        // --- This is a single, non-installment purchase ---
+        if (purchaseDate >= invoiceStartDate && purchaseDate <= invoiceEndDate) {
           cardTotalForInvoice += t.amount;
         }
-      } 
-      // Installment purchases
-      else {
+      } else {
+        // --- This is an installment purchase ---
         const installmentValue = t.amount / t.installments.total;
-        
-        // Determine the closing date of the first invoice this purchase will appear on.
-        const purchaseYearUTC = purchaseDate.getUTCFullYear();
-        const purchaseMonthUTC = purchaseDate.getUTCMonth();
-        const purchaseDayUTC = purchaseDate.getUTCDate();
 
-        const firstInvoiceClosingDate = new Date(Date.UTC(purchaseYearUTC, purchaseMonthUTC, card.closingDate));
-        if (purchaseDayUTC > card.closingDate) {
-            firstInvoiceClosingDate.setUTCMonth(firstInvoiceClosingDate.getUTCMonth() + 1);
+        // Find the closing date of the FIRST invoice this purchase belongs to.
+        let firstInstallmentYear = purchaseDate.getUTCFullYear();
+        let firstInstallmentMonth = purchaseDate.getUTCMonth();
+        if (purchaseDate.getUTCDate() > card.closingDate) {
+            firstInstallmentMonth += 1;
+        }
+        if (firstInstallmentMonth > 11) {
+            firstInstallmentMonth = 0;
+            firstInstallmentYear += 1;
         }
 
-        // Now, check if any of the installment invoices match the current open invoice
+        // Loop through all possible installments for this purchase.
         for (let i = 0; i < t.installments.total; i++) {
-          const installmentInvoiceDate = new Date(firstInvoiceClosingDate);
-          installmentInvoiceDate.setUTCMonth(installmentInvoiceDate.getUTCMonth() + i);
+            let currentInstallmentYear = firstInstallmentYear;
+            let currentInstallmentMonth = firstInstallmentMonth + i;
 
-          if (installmentInvoiceDate.getTime() === upcomingClosingDateUTC.getTime()) {
-            cardTotalForInvoice += installmentValue;
-            break; // Found the installment for this period, move to next transaction
-          }
+            // Handle year rollovers for installments.
+            currentInstallmentYear += Math.floor(currentInstallmentMonth / 12);
+            currentInstallmentMonth = currentInstallmentMonth % 12;
+            
+            // Check if this installment's invoice period matches the card's currently open invoice.
+            if (currentInstallmentYear === closingDateYear && currentInstallmentMonth === closingDateMonth) {
+              cardTotalForInvoice += installmentValue;
+              break; // Found the installment for this period, move to the next transaction.
+            }
         }
       }
     });
