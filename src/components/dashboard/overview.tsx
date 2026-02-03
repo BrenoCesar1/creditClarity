@@ -35,29 +35,73 @@ export function DashboardOverview() {
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
   
-  const upcomingInvoiceTotal = transactions.reduce((total, t) => {
-    const card = cards.find(c => c.id === t.cardId);
-    if (!card || !card.closingDate) return total;
-    
-    const transactionDate = new Date(t.date);
+  const upcomingInvoiceTotal = cards.reduce((totalForAllWindows, card) => {
+    if (!card.closingDate) return totalForAllWindows;
+
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     let upcomingClosingDate;
     if (today.getDate() <= card.closingDate) {
-        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate);
+        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate, 23, 59, 59, 999);
     } else {
-        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate);
+        upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate, 23, 59, 59, 999);
     }
-    
-    const previousClosingDate = new Date(upcomingClosingDate.getFullYear(), upcomingClosingDate.getMonth() - 1, card.closingDate);
+    const previousClosingDate = new Date(upcomingClosingDate.getFullYear(), upcomingClosingDate.getMonth() - 1, card.closingDate, 23, 59, 59, 999);
 
-    if (transactionDate > previousClosingDate && transactionDate <= upcomingClosingDate) {
-        if (t.installments) {
-            return total + (t.amount / t.installments.total);
+    const cardTransactions = transactions.filter(t => t.cardId === card.id);
+
+    const cardInvoiceTotal = cardTransactions.reduce((cardTotal, t) => {
+        const transactionDate = new Date(t.date);
+
+        if (!t.installments) {
+            if (transactionDate > previousClosingDate && transactionDate <= upcomingClosingDate) {
+                return cardTotal + t.amount;
+            }
+            return cardTotal;
         }
-        return total + t.amount;
-    }
-    return total;
+        else {
+            const installmentValue = t.amount / t.installments.total;
+            const purchaseDate = transactionDate;
+            const dueDay = card.dueDate;
+            const closingDay = card.closingDate;
+            const purchaseYear = purchaseDate.getFullYear();
+            const purchaseMonth = purchaseDate.getMonth();
+            const purchaseDay = purchaseDate.getDate();
+
+            let firstInvoiceDueMonth = purchaseMonth;
+            let firstInvoiceDueYear = purchaseYear;
+
+            if (purchaseDay > closingDay) {
+                firstInvoiceDueMonth += 1;
+            }
+            if (dueDay <= closingDay) {
+                firstInvoiceDueMonth += 1;
+            }
+            const firstInvoiceDueDate = new Date(firstInvoiceDueYear, firstInvoiceDueMonth, dueDay);
+            firstInvoiceDueDate.setHours(0,0,0,0);
+
+            const closingDateForCurrentInvoice = new Date(upcomingClosingDate);
+            closingDateForCurrentInvoice.setHours(0,0,0,0);
+            let currentInvoiceDueMonth = closingDateForCurrentInvoice.getMonth();
+            let currentInvoiceDueYear = closingDateForCurrentInvoice.getFullYear();
+            if (dueDay <= closingDay) {
+                currentInvoiceDueMonth += 1;
+            }
+            const currentInvoiceDueDate = new Date(currentInvoiceDueYear, currentInvoiceDueMonth, dueDay);
+            currentInvoiceDueDate.setHours(0,0,0,0);
+            
+            const totalInstallments = t.installments.total;
+            const lastInvoiceDueDate = new Date(firstInvoiceDueDate);
+            lastInvoiceDueDate.setMonth(lastInvoiceDueDate.getMonth() + totalInstallments - 1);
+            
+            if (currentInvoiceDueDate >= firstInvoiceDueDate && currentInvoiceDueDate <= lastInvoiceDueDate) {
+                return cardTotal + installmentValue;
+            }
+            return cardTotal;
+        }
+    }, 0);
+    return totalForAllWindows + cardInvoiceTotal;
   }, 0);
 
   const totalFutureInstallments = transactions
