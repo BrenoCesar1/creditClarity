@@ -30,60 +30,80 @@ export function DashboardOverview() {
     .filter((d) => !d.paid)
     .reduce((sum, d) => sum + d.amount, 0);
   
-  const upcomingInvoiceTotal = cards.reduce((totalForAllWindows, card) => {
-    if (!card.closingDate) return totalForAllWindows;
+  const upcomingInvoiceTotal = cards.reduce((total, card) => {
+    if (!card.closingDate) return total;
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let upcomingClosingDate;
-    if (today.getDate() <= card.closingDate) {
-      upcomingClosingDate = new Date(today.getFullYear(), today.getMonth(), card.closingDate, 23, 59, 59, 999);
-    } else {
-      upcomingClosingDate = new Date(today.getFullYear(), today.getMonth() + 1, card.closingDate, 23, 59, 59, 999);
-    }
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
+    // Determine the date for the upcoming closing date.
+    let upcomingClosingDate;
+    if (currentDay > card.closingDate) {
+      // The closing date for this month has passed. The next invoice closes next month.
+      upcomingClosingDate = new Date(currentYear, currentMonth + 1, card.closingDate);
+    } else {
+      // The closing date for this month has not passed yet.
+      upcomingClosingDate = new Date(currentYear, currentMonth, card.closingDate);
+    }
+    
+    // The period for this invoice starts the day after the *previous* closing date.
     const previousClosingDate = new Date(upcomingClosingDate);
     previousClosingDate.setMonth(previousClosingDate.getMonth() - 1);
 
+    const invoiceStartDate = new Date(previousClosingDate);
+    invoiceStartDate.setDate(invoiceStartDate.getDate() + 1);
+    invoiceStartDate.setHours(0, 0, 0, 0);
+
+    const invoiceEndDate = new Date(upcomingClosingDate);
+    invoiceEndDate.setHours(23, 59, 59, 999);
+
+    let cardTotalForInvoice = 0;
+
     const cardTransactions = transactions.filter(t => t.cardId === card.id);
 
-    const cardInvoiceTotal = cardTransactions.reduce((cardTotal, t) => {
-        const purchaseDate = new Date(t.date);
+    cardTransactions.forEach(t => {
+      const purchaseDate = new Date(t.date);
 
-        if (!t.installments) {
-            if (purchaseDate > previousClosingDate && purchaseDate <= upcomingClosingDate) {
-                return cardTotal + t.amount;
-            }
-            return cardTotal;
+      // Simple purchases (not installments)
+      if (!t.installments) {
+        if (purchaseDate >= invoiceStartDate && purchaseDate <= invoiceEndDate) {
+          cardTotalForInvoice += t.amount;
         }
-        
-        else {
-            const installmentValue = t.amount / t.installments.total;
+      } 
+      // Installment purchases
+      else {
+        const installmentValue = t.amount / t.installments.total;
 
-            const closingDateOfPurchasePeriod = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), card.closingDate, 23, 59, 59, 999);
+        // Determine the closing date of the invoice in the month of purchase
+        const purchaseMonthClosingDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), card.closingDate);
 
-            let firstInvoiceClosingDate;
-            if (purchaseDate > closingDateOfPurchasePeriod) {
-                firstInvoiceClosingDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth() + 1, card.closingDate);
-            } else {
-                firstInvoiceClosingDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), card.closingDate);
-            }
-
-            for (let i = 0; i < t.installments.total; i++) {
-                const installmentClosingDate = new Date(firstInvoiceClosingDate);
-                installmentClosingDate.setMonth(installmentClosingDate.getMonth() + i);
-
-                if (installmentClosingDate.getFullYear() === upcomingClosingDate.getFullYear() &&
-                    installmentClosingDate.getMonth() === upcomingClosingDate.getMonth()) {
-                    return cardTotal + installmentValue;
-                }
-            }
-            
-            return cardTotal;
+        // Determine the first invoice this purchase will appear on
+        let firstInvoiceDate = new Date(purchaseMonthClosingDate);
+        if (purchaseDate.getTime() > purchaseMonthClosingDate.getTime()) {
+          // If purchase is after closing, it's on next month's invoice
+          firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
         }
-    }, 0);
-    return totalForAllWindows + cardInvoiceTotal;
+
+        // Iterate through all installments to see if one falls into the current open invoice period
+        for (let i = 0; i < t.installments.total; i++) {
+          const installmentInvoiceDate = new Date(firstInvoiceDate);
+          installmentInvoiceDate.setMonth(installmentInvoiceDate.getMonth() + i);
+
+          // Check if this installment's invoice date is the same as the currently open invoice's closing date
+          if (
+            installmentInvoiceDate.getFullYear() === upcomingClosingDate.getFullYear() &&
+            installmentInvoiceDate.getMonth() === upcomingClosingDate.getMonth()
+          ) {
+            cardTotalForInvoice += installmentValue;
+            break; // An installment can only appear once per invoice
+          }
+        }
+      }
+    });
+
+    return total + cardTotalForInvoice;
   }, 0);
 
   const totalFutureInstallments = transactions
